@@ -2,7 +2,6 @@
 #include <stdexcept>
 #include <string>
 
-
 #include "DefaultEWrapper.h"
 #include "EClientSocket.h"
 #include "EReader.h"
@@ -65,8 +64,8 @@ int main(int argc, char** argv)
   {
     throw std::runtime_error("Expecting host and port arguments");
   }
-  std::string host{argv[1]};
-  int port{std::atoi(argv[2])};
+  std::string host{argv[1]}; // host.docker.internal
+  int port{std::atoi(argv[2])}; // 7497
 
   std::cout << "Connecting to " << host << ":" << port << std::endl;
   App app;

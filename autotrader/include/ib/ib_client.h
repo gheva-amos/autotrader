@@ -8,6 +8,9 @@
 #include "EClientSocket.h"
 #include "EReader.h"
 #include "EReaderOSSignal.h"
+#include "Contract.h"
+
+#include "util/tsvector.h"
 
 namespace autotrader
 {
@@ -23,6 +26,11 @@ public:
   void step();
 
   virtual void error(int id, time_t errorTime, int errorCode,const std::string& errorString, const std::string& advancedOrderRejectJson) override;
+
+  // Contracts
+  size_t contract_details(Contract& contract);
+  virtual void contractDetails(int reqId, const ContractDetails& contractDetails) override;
+  long contract_id(size_t index);
 protected:
   EClient* client();
 private:
@@ -39,6 +47,8 @@ private:
   std::unique_ptr<EReaderOSSignal> signal_;
   std::unique_ptr<EClientSocket> client_;
   std::unique_ptr<EReader> reader_;
+
+  ThreadSafeVector<Contract> contracts_;
 
   static int client_id;
 };

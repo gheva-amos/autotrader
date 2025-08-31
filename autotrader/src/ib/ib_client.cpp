@@ -2,6 +2,7 @@
 #include <utility>
 #include <thread>
 #include <chrono>
+#include <iostream>
 #define DEBUG
 #include "debug.h"
 
@@ -73,7 +74,25 @@ void IBClient::process_messages()
 
 void IBClient::error(int id, time_t errorTime, int errorCode,const std::string& errorString, const std::string& advancedOrderRejectJson)
 {
-  DBG_MSG("Handling error") << id << " " << errorCode << " " << errorString << std::endl << advancedOrderRejectJson << std::endl;
+  std::cerr << "Handling error" << id << " " << errorCode << " " << errorString << std::endl << advancedOrderRejectJson << std::endl;
+}
+
+size_t IBClient::contract_details(Contract& contract)
+{
+  size_t ret{contracts_.push_back(contract)};
+  client()->reqContractDetails(ret, contract);
+  step();
+  return ret;
+}
+
+void IBClient::contractDetails(int reqId, const ContractDetails& contractDetails)
+{
+  contracts_[reqId] = contractDetails.contract;
+}
+
+long IBClient::contract_id(size_t index)
+{
+  return contracts_[index].conId;
 }
 
 } // namespace

@@ -11,13 +11,14 @@ class Client : public autotrader::IBClient
 public:
   Client(std::string host, int port);
   void contract_details(Contract& contract);
-  virtual void contractDetails( int reqId, const ContractDetails& contractDetails) override;
+  virtual void contractDetails(int reqId, const ContractDetails& contractDetails) override;
 
-  long contract_id(Contract contract);
+  long contract_id(Contract contract, size_t index);
 private:
   void req_contract(Contract contract);
   bool asked_;
   Contract asked_for_;
+  std::vector<Contract> contracts_;
 };
 
 Client::Client(std::string host, int port) :
@@ -27,11 +28,13 @@ Client::Client(std::string host, int port) :
 
 void Client::contract_details(Contract& contract)
 {
-  client()->reqContractDetails(777, contract);
+  client()->reqContractDetails(contracts_.size(), contract);
+  contracts_.push_back(contract);
 }
 
-void Client::contractDetails( int reqId, const ContractDetails& contractDetails)
+void Client::contractDetails(int reqId, const ContractDetails& contractDetails)
 {
+  contracts_[reqId] = contractDetails.contract;
   asked_ = true;
   asked_for_ = contractDetails.contract;
   //DBG_MSG("Contract Details:") << "id: " << contractDetails.contract.conId << std::endl;
@@ -49,10 +52,10 @@ void Client::req_contract(Contract contract)
   }
 }
 
-long Client::contract_id(Contract contract)
+long Client::contract_id(Contract contract, size_t index)
 {
   req_contract(contract);
-  return asked_for_.conId;
+  return contracts_[index].conId;
 }
 
 int main(int argc, char** argv)
@@ -72,7 +75,7 @@ int main(int argc, char** argv)
   contract.exchange = "SMART";
 
   client.start();
-  DBG_MSG("Contract ID is:") << client.contract_id(contract) << std::endl;
+  DBG_MSG("Contract ID is:") << client.contract_id(contract, 0) << std::endl;
 
   return 0;
 }

@@ -8,3 +8,7 @@ target_link_libraries(connection_test PRIVATE ibapi)
 add_executable(connection_raii connection_raii.cpp)
 target_compile_options(connection_raii PRIVATE -Wall -Wextra -pedantic -Wno-enum-compare -Wno-maybe-uninitialized -Wno-uninitialized -Wno-unused-parameter)
 target_link_libraries(connection_raii PRIVATE ibapi)
+
+add_executable(contract_details contract_details.cpp)
+target_compile_options(contract_details PRIVATE -Wall -Wextra -pedantic -Wno-enum-compare -Wno-maybe-uninitialized -Wno-uninitialized -Wno-unused-parameter)
+target_link_libraries(contract_details PRIVATE autotrader_ib)

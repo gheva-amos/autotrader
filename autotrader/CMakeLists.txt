@@ -14,6 +14,7 @@ file(MAKE_DIRECTORY ${GENERATED_DIR})
 
 find_package(Protobuf REQUIRED)
 include_directories(${Protobuf_INCLUDE_DIRS} ${GENERATED_DIR})
+include_directories(include)
 
 
 file(GLOB IBAPI_PROTO "${IBAPI_DIR}/source/proto/*.proto")
@@ -30,7 +31,7 @@ file(GLOB IBAPI_SOURCES
     )
 list(FILTER IBAPI_SOURCES EXCLUDE REGEX ".*/client/Decimal\\.cpp$")
 
-add_library(ibapi STATIC ${IBAPI_SOURCES} ${PROTO_SRCS} ${PROTO_HDRS} ${CMAKE_SOURCE_DIR}/src/decimal.cpp)
+add_library(ibapi STATIC ${IBAPI_SOURCES} ${PROTO_SRCS} ${PROTO_HDRS} ${CMAKE_SOURCE_DIR}/src/patch/decimal.cpp)
 target_include_directories(ibapi PUBLIC
     "${IBAPI_DIR}/source/cppclient"
     "${IBAPI_DIR}/source/cppclient/client"
@@ -43,3 +44,4 @@ if(UNIX)
 endif()
 
 add_subdirectory(experiments)
+add_subdirectory(src)

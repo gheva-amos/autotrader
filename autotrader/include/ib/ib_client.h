@@ -30,7 +30,13 @@ public:
   // Contracts
   size_t contract_details(Contract& contract);
   virtual void contractDetails(int reqId, const ContractDetails& contractDetails) override;
+  virtual void contractDetailsEnd(int reqId) override;
   long contract_id(size_t index);
+
+  // Find symbol
+  size_t search_symbol(const std::string& symbol);
+  virtual void symbolSamples(int reqId, const std::vector<ContractDescription> &contractDescriptions) override;
+  std::vector<std::string>& symbols(size_t index);
 protected:
   EClient* client();
 private:
@@ -49,6 +55,7 @@ private:
   std::unique_ptr<EReader> reader_;
 
   ThreadSafeVector<Contract> contracts_;
+  ThreadSafeVector<std::vector<std::string>> symbols_;
 
   static int client_id;
 };

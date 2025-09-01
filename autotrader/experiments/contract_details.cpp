@@ -27,6 +27,12 @@ int main(int argc, char** argv)
 
   DBG_MSG("Contract ID is:") << client.contract_id(index) << std::endl;
 
+  index = client.search_symbol("tesla");
+  auto symbols = client.symbols(index);
+  for (auto s : symbols)
+  {
+    DBG_MSG("Symbol") << s << std::endl;
+  }
   return 0;
 }
 

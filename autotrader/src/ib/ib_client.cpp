@@ -90,9 +90,37 @@ void IBClient::contractDetails(int reqId, const ContractDetails& contractDetails
   contracts_[reqId] = contractDetails.contract;
 }
 
+void IBClient::contractDetailsEnd(int reqId)
+{
+  // TODO if this is not called for a reqId, the contracts_[reqId] might not be valid
+}
+
 long IBClient::contract_id(size_t index)
 {
   return contracts_[index].conId;
+}
+
+size_t IBClient::search_symbol(const std::string& symbol)
+{
+  size_t ret{symbols_.push_back(std::vector<std::string>())};
+
+  client()->reqMatchingSymbols(ret, symbol);
+  step();
+  return ret;
+}
+
+void IBClient::symbolSamples(int reqId, const std::vector<ContractDescription> &contractDescriptions)
+{
+  auto& v = symbols_[reqId];
+  for (auto c : contractDescriptions)
+  {
+    v.push_back(c.contract.symbol);
+  }
+}
+
+std::vector<std::string>& IBClient::symbols(size_t index)
+{
+  return symbols_[index];
 }
 
 } // namespace

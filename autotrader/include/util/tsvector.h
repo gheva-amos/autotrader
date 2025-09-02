@@ -36,6 +36,14 @@ public:
     return vector_[index];
   }
 
+  T pop()
+  {
+    std::unique_lock<std::mutex> lock(lock_);
+    T ret{vector_.back()};
+    vector_.pop_back();
+    return ret;
+  }
+
 private:
   std::vector<T> vector_;
   std::mutex lock_;

@@ -28,7 +28,7 @@ IBClient::IBClient(const std::string host, int port) :
 
 IBClient::~IBClient()
 {
-  if (connected_)
+  if (is_connected())
   {
     client_->eDisconnect();
   }
@@ -46,6 +46,7 @@ EClient* IBClient::client()
 
 void IBClient::step()
 {
+  std::this_thread::sleep_for(std::chrono::milliseconds(10));
   wait_for_signal();
   process_messages();
 }
@@ -58,7 +59,6 @@ void IBClient::start()
   }
   started_ = true;
   reader_->start();
-  std::this_thread::sleep_for(std::chrono::milliseconds(10));
   step();
 }
 
@@ -87,6 +87,7 @@ size_t IBClient::contract_details(Contract& contract)
 
 void IBClient::contractDetails(int reqId, const ContractDetails& contractDetails)
 {
+  DBG_MSG("contract details") << contractDetails.contract.multiplier << std::endl;
   contracts_[reqId] = contractDetails.contract;
 }
 
@@ -121,6 +122,70 @@ void IBClient::symbolSamples(int reqId, const std::vector<ContractDescription> &
 std::vector<std::string>& IBClient::symbols(size_t index)
 {
   return symbols_[index];
+}
+
+void IBClient::request_order_ids(size_t how_many)
+{
+  client()->reqIds(how_many);
+  step();
+}
+
+void IBClient::nextValidId(OrderId orderId)
+{
+  order_ids_.push_back(orderId);
+}
+
+OrderId IBClient::next_order_id()
+{
+  return order_ids_.pop();
+}
+
+OrderId IBClient::place_order(Order order, Contract contract)
+{
+  request_order_ids(1);
+  OrderId id = next_order_id();
+  client_->placeOrder(id, contract, order);
+  step();
+  return id;
+}
+
+OrderId IBClient::buy(Contract contract, size_t how_many)
+{
+  Order order;
+  order.action = "BUY";
+  order.totalQuantity = how_many;
+  order.orderType = "MKT";
+  order.transmit = true;
+  return place_order(order, contract);
+}
+
+OrderId IBClient::sell(Contract contract, size_t how_many)
+{
+  Order order;
+  order.action = "SELL";
+  order.totalQuantity = how_many;
+  order.orderType = "MKT";
+  order.transmit = true;
+  return place_order(order, contract);
+}
+
+void IBClient::openOrder(OrderId orderId, const Contract&, const Order&, const OrderState& state)
+{
+  DBG_MSG("FEES") << state.commissionAndFees << std::endl;
+  order_states_.insert(std::make_pair(orderId, state));
+}
+
+OrderState IBClient::get_order_state(OrderId id)
+{
+  return order_states_[id];
+}
+
+void IBClient::orderStatus(OrderId orderId, const std::string& status, Decimal filled,
+      Decimal remaining, double avgFillPrice, long long permId, int parentId,
+      double lastFillPrice, int clientId, const std::string& whyHeld, double mktCapPrice)
+{
+  // TODO do we need any of this?
+  DBG_MSG("Order status comming in") << std::endl;
 }
 
 } // namespace

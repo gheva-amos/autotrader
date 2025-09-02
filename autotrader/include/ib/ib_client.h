@@ -9,8 +9,11 @@
 #include "EReader.h"
 #include "EReaderOSSignal.h"
 #include "Contract.h"
+#include "Order.h"
+#include "OrderState.h"
 
 #include "util/tsvector.h"
+#include "util/tsmap.h"
 
 namespace autotrader
 {
@@ -37,6 +40,19 @@ public:
   size_t search_symbol(const std::string& symbol);
   virtual void symbolSamples(int reqId, const std::vector<ContractDescription> &contractDescriptions) override;
   std::vector<std::string>& symbols(size_t index);
+
+  // Orders
+  void request_order_ids(size_t how_many=1);
+  virtual void nextValidId(OrderId orderId) override;
+  OrderId next_order_id();
+  OrderId place_order(Order order, Contract contract);
+  OrderId buy(Contract contract, size_t how_many);
+  OrderId sell(Contract contract, size_t how_many);
+  virtual void openOrder(OrderId orderId, const Contract&, const Order&, const OrderState&) override;
+  OrderState get_order_state(OrderId id);
+  virtual void orderStatus(OrderId orderId, const std::string& status, Decimal filled,
+	Decimal remaining, double avgFillPrice, long long permId, int parentId,
+	double lastFillPrice, int clientId, const std::string& whyHeld, double mktCapPrice) override;
 protected:
   EClient* client();
 private:
@@ -56,6 +72,8 @@ private:
 
   ThreadSafeVector<Contract> contracts_;
   ThreadSafeVector<std::vector<std::string>> symbols_;
+  ThreadSafeVector<OrderId> order_ids_;
+  ThreadSafeMap<OrderId, OrderState> order_states_;
 
   static int client_id;
 };

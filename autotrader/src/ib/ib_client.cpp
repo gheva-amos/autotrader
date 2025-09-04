@@ -226,4 +226,33 @@ void IBClient::tickString(TickerId tickerId, TickType tickType, const std::strin
   mkt_data_[tickerId].value(tickType) = value;
 }
 
+size_t IBClient::request_historical_data(Contract con, std::string end, std::string duration,
+    std::string bar_size)
+{
+  size_t ret{historic_bars_.push_back(std::vector<Bar>{})};
+  client_->reqHistoricalData(ret, con, end, duration, bar_size, "TRADES", 1, 1, false,
+      TagValueListSPtr{});
+  step();
+  return ret;
+}
+
+void IBClient::historicalData(TickerId reqId, const Bar& bar)
+{
+  DBG_MSG(__func__) << 
+	" time " <<  bar.time <<
+	" high " << bar.high <<
+	" low " << bar.low <<
+	" open " << bar.open <<
+	" close " << bar.close <<
+	" wap " << bar.wap <<
+	" volume " << bar.volume <<
+	" count " << bar.count << std::endl;
+  historic_bars_[reqId].push_back(bar);
+}
+
+void IBClient::historicalDataEnd(int reqId, const std::string& startDateStr, const std::string& endDateStr)
+{
+  // TODO should we implement this
+}
+
 } // namespace

@@ -62,6 +62,12 @@ public:
   virtual void tickSize(TickerId tickerId, TickType field, Decimal size) override;
   virtual void tickGeneric(TickerId tickerId, TickType tickType, double value) override;
   virtual void tickString(TickerId tickerId, TickType tickType, const std::string& value) override;
+
+  // Historical data
+  size_t request_historical_data(Contract con, std::string end="", std::string duration="1 D", std::string bar_size="5 mins");
+  virtual void historicalData(TickerId reqId, const Bar& bar) override;
+  virtual void historicalDataEnd(int reqId, const std::string& startDateStr, const std::string& endDateStr) override;
+
 protected:
   EClient* client();
 private:
@@ -84,6 +90,7 @@ private:
   ThreadSafeVector<OrderId> order_ids_;
   ThreadSafeMap<OrderId, OrderState> order_states_;
   ThreadSafeVector<MarketData> mkt_data_;
+  ThreadSafeVector<std::vector<Bar>> historic_bars_;
 
   static int client_id;
 };

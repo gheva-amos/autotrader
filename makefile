@@ -10,7 +10,7 @@ image: ${DOCKER_FILE}
 run:
 	docker run -d \
           --add-host=host.docker.internal:host-gateway \
-          --name ${CONTAINER_NAME} -v ./:/mnt/src -t ${IMAGE_NAME}:${IMAGE_VERSION}
+          --name ${CONTAINER_NAME} -v ./autotrader:/mnt/src -t ${IMAGE_NAME}:${IMAGE_VERSION}
 
 connect:
 	docker exec -it ${CONTAINER_NAME} /bin/bash

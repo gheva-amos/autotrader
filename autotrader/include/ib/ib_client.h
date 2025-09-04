@@ -14,6 +14,7 @@
 
 #include "util/tsvector.h"
 #include "util/tsmap.h"
+#include "ib/market_data.h"
 
 namespace autotrader
 {
@@ -53,6 +54,14 @@ public:
   virtual void orderStatus(OrderId orderId, const std::string& status, Decimal filled,
 	Decimal remaining, double avgFillPrice, long long permId, int parentId,
 	double lastFillPrice, int clientId, const std::string& whyHeld, double mktCapPrice) override;
+
+  // Market data
+  size_t start_market_data_stream(Contract con);
+  void stop_market_data_stream(size_t index);
+  virtual void tickPrice(TickerId tickerId, TickType field, double price, const TickAttrib& attrib) override;
+  virtual void tickSize(TickerId tickerId, TickType field, Decimal size) override;
+  virtual void tickGeneric(TickerId tickerId, TickType tickType, double value) override;
+  virtual void tickString(TickerId tickerId, TickType tickType, const std::string& value) override;
 protected:
   EClient* client();
 private:
@@ -74,6 +83,7 @@ private:
   ThreadSafeVector<std::vector<std::string>> symbols_;
   ThreadSafeVector<OrderId> order_ids_;
   ThreadSafeMap<OrderId, OrderState> order_states_;
+  ThreadSafeVector<MarketData> mkt_data_;
 
   static int client_id;
 };

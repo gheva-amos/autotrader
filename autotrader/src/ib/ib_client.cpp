@@ -188,4 +188,42 @@ void IBClient::orderStatus(OrderId orderId, const std::string& status, Decimal f
   DBG_MSG("Order status comming in") << std::endl;
 }
 
+size_t IBClient::start_market_data_stream(Contract con)
+{
+  size_t ret{mkt_data_.push_back(MarketData())};
+  client_->reqMktData(ret, con, "", false, false, TagValueListSPtr());
+  step();
+  return ret;
+}
+
+void IBClient::stop_market_data_stream(size_t index)
+{
+  client_->cancelMktData(index);
+  step();
+}
+
+void IBClient::tickPrice(TickerId tickerId, TickType field, double price, const TickAttrib& attrib)
+{
+  DBG_MSG(__func__) << "field " << field << " price " << price << std::endl;
+  mkt_data_[tickerId].price(field) = price;
+}
+
+void IBClient::tickSize(TickerId tickerId, TickType field, Decimal size)
+{
+  DBG_MSG(__func__) << "field " << field << " size " << size << std::endl;
+  mkt_data_[tickerId].size(field) = size;
+}
+
+void IBClient::tickGeneric(TickerId tickerId, TickType tickType, double value)
+{
+  DBG_MSG(__func__) << "field " << tickType << " value " << value << std::endl;
+  mkt_data_[tickerId].generic(tickType) = value;
+}
+
+void IBClient::tickString(TickerId tickerId, TickType tickType, const std::string& value)
+{
+  DBG_MSG(__func__) << "field " << tickType << " value " << value << std::endl;
+  mkt_data_[tickerId].value(tickType) = value;
+}
+
 } // namespace

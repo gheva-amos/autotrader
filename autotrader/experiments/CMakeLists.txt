@@ -16,3 +16,7 @@ target_link_libraries(contract_details PRIVATE autotrader_ib)
 add_executable(market_data market_data.cpp)
 target_compile_options(market_data PRIVATE -Wall -Wextra -pedantic -Wno-enum-compare -Wno-maybe-uninitialized -Wno-uninitialized -Wno-unused-parameter)
 target_link_libraries(market_data PRIVATE autotrader_ib)
+
+add_executable(zmq zmq.cpp)
+target_compile_options(zmq PRIVATE -Wall -Wextra -pedantic -Wno-enum-compare -Wno-maybe-uninitialized -Wno-uninitialized -Wno-unused-parameter)
+target_link_libraries(zmq PRIVATE libzmq cppzmq)

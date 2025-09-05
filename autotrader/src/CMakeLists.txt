@@ -6,3 +6,4 @@ add_library(autotrader_debug debug.cpp)
 target_compile_options(autotrader_debug PRIVATE -Wall -Wextra -pedantic -Wno-enum-compare -Wno-maybe-uninitialized -Wno-uninitialized -Wno-unused-parameter)
 
 add_subdirectory(ib)
+add_subdirectory(server)

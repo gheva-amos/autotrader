@@ -14,6 +14,7 @@
 
 #include "util/tsvector.h"
 #include "util/tsmap.h"
+#include "util/mpsc_queue.h"
 #include "ib/market_data.h"
 
 namespace autotrader
@@ -68,6 +69,8 @@ public:
   virtual void historicalData(TickerId reqId, const Bar& bar) override;
   virtual void historicalDataEnd(int reqId, const std::string& startDateStr, const std::string& endDateStr) override;
 
+  bool next_historical_id(size_t& ret);
+  std::vector<Bar> historical_bars(size_t id) const;
 protected:
   EClient* client();
 private:
@@ -91,6 +94,7 @@ private:
   ThreadSafeMap<OrderId, OrderState> order_states_;
   ThreadSafeVector<MarketData> mkt_data_;
   ThreadSafeVector<std::vector<Bar>> historic_bars_;
+  MPSCQueue<size_t> historical_data_queue_;
 
   static int client_id;
 };

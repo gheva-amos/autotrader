@@ -238,21 +238,22 @@ size_t IBClient::request_historical_data(Contract con, std::string end, std::str
 
 void IBClient::historicalData(TickerId reqId, const Bar& bar)
 {
-  DBG_MSG(__func__) << 
-	" time " <<  bar.time <<
-	" high " << bar.high <<
-	" low " << bar.low <<
-	" open " << bar.open <<
-	" close " << bar.close <<
-	" wap " << bar.wap <<
-	" volume " << bar.volume <<
-	" count " << bar.count << std::endl;
   historic_bars_[reqId].push_back(bar);
 }
 
 void IBClient::historicalDataEnd(int reqId, const std::string& startDateStr, const std::string& endDateStr)
 {
-  // TODO should we implement this
+  historical_data_queue_.push(reqId);
+}
+
+bool IBClient::next_historical_id(size_t& ret)
+{
+  return historical_data_queue_.pop(ret);
+}
+
+std::vector<Bar> IBClient::historical_bars(size_t id) const
+{
+  return historic_bars_[id];
 }
 
 } // namespace

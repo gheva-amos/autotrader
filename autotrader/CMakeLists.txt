@@ -43,5 +43,29 @@ if(UNIX)
   target_link_libraries(ibapi PUBLIC pthread protobuf)
 endif()
 
+include(FetchContent)
+
+# ------- libzmq (ZeroMQ C library) -------
+# Build from source; disable extras so it’s lightweight
+set(ENABLE_DRAFTS OFF CACHE BOOL "" FORCE)
+set(BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(WITH_LIBSODIUM OFF CACHE BOOL "" FORCE)   # avoid external sodium
+set(WITH_TLS OFF CACHE BOOL "" FORCE)
+
+FetchContent_Declare(libzmq
+      GIT_REPOSITORY https://github.com/zeromq/libzmq.git
+      GIT_TAG        v4.3.5
+    )
+FetchContent_MakeAvailable(libzmq)
+# Exposes target: libzmq  (and libzmq-static if you tweak BUILD_SHARED/BUILD_STATIC)
+
+# ------- cppzmq (header-only C++ binding) -------
+FetchContent_Declare(cppzmq
+      GIT_REPOSITORY https://github.com/zeromq/cppzmq.git
+      GIT_TAG        v4.10.0
+    )
+FetchContent_MakeAvailable(cppzmq)
+# Exposes target: cppzmq
+
 add_subdirectory(experiments)
 add_subdirectory(src)

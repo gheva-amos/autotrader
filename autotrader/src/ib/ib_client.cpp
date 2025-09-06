@@ -101,7 +101,6 @@ size_t IBClient::contract_details(Contract& contract)
 {
   size_t ret{contracts_.push_back(contract)};
   client()->reqContractDetails(ret, contract);
-  step();
   return ret;
 }
 
@@ -126,7 +125,6 @@ size_t IBClient::search_symbol(const std::string& symbol)
   size_t ret{symbols_.push_back(std::vector<std::string>())};
 
   client()->reqMatchingSymbols(ret, symbol);
-  step();
   return ret;
 }
 
@@ -147,7 +145,6 @@ std::vector<std::string>& IBClient::symbols(size_t index)
 void IBClient::request_order_ids(size_t how_many)
 {
   client()->reqIds(how_many);
-  step();
 }
 
 void IBClient::nextValidId(OrderId orderId)
@@ -165,7 +162,6 @@ OrderId IBClient::place_order(Order order, Contract contract)
   request_order_ids(1);
   OrderId id = next_order_id();
   client_->placeOrder(id, contract, order);
-  step();
   return id;
 }
 
@@ -212,7 +208,6 @@ size_t IBClient::start_market_data_stream(Contract con)
 {
   size_t ret{mkt_data_.push_back(MarketData())};
   client_->reqMktData(ret, con, "", false, false, TagValueListSPtr());
-  step();
   return ret;
 }
 
@@ -229,7 +224,6 @@ size_t IBClient::start_market_data_stream(std::string symbol)
 void IBClient::stop_market_data_stream(size_t index)
 {
   client_->cancelMktData(index);
-  step();
 }
 
 void IBClient::tickPrice(TickerId tickerId, TickType field, double price, const TickAttrib& attrib)
@@ -262,7 +256,6 @@ size_t IBClient::request_historical_data(Contract con, std::string end, std::str
   size_t ret{historic_bars_.push_back(std::vector<Bar>{})};
   client_->reqHistoricalData(ret, con, end, duration, bar_size, "TRADES", 1, 1, false,
       TagValueListSPtr{});
-  step();
   return ret;
 }
 

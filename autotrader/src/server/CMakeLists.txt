@@ -5,6 +5,8 @@ set(CMAKE_CXX_STANDARD 23)
 add_executable(autotrader
     base_thread.cpp
     router.cpp
+    pull.cpp
+    pub.cpp
     autotrader.cpp
     )
 target_compile_options(autotrader PRIVATE -Wall -Wextra -pedantic -Wno-enum-compare -Wno-maybe-uninitialized -Wno-uninitialized -Wno-unused-parameter)

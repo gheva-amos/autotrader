@@ -11,6 +11,8 @@ run:
 	docker run -d \
           --add-host=host.docker.internal:host-gateway \
           -p 7001:7001 \
+          -p 7002:7002 \
+          -p 7003:7003 \
           --name ${CONTAINER_NAME} -v ./autotrader:/mnt/src -t ${IMAGE_NAME}:${IMAGE_VERSION}
 
 connect:

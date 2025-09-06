@@ -15,7 +15,8 @@ IBClient::IBClient(const std::string host, int port) :
   host_{std::move(host)}, port_{port}, client_id_{client_id},
   connected_{false}, started_{false},
   signal_{std::make_unique<EReaderOSSignal>(2000)},
-  client_{std::make_unique<EClientSocket>(this, signal_.get())}
+  client_{std::make_unique<EClientSocket>(this, signal_.get())},
+  running_{true}
 {
   if (!client_->eConnect(host_.c_str(), port_, client_id_))
   {
@@ -48,7 +49,13 @@ void IBClient::step()
 {
   std::this_thread::sleep_for(std::chrono::milliseconds(10));
   wait_for_signal();
-  process_messages();
+  try
+  {
+    process_messages();
+  } catch (const std::exception& e)
+  {
+    DBG_MSG("Caught exception") << e.what() << std::endl;
+  }
 }
 
 void IBClient::start()
@@ -60,6 +67,19 @@ void IBClient::start()
   started_ = true;
   reader_->start();
   step();
+}
+
+void IBClient::stop()
+{
+  running_ = false;
+}
+
+void IBClient::operator()()
+{
+  while (running_)
+  {
+    step();
+  }
 }
 
 void IBClient::wait_for_signal()
@@ -194,6 +214,16 @@ size_t IBClient::start_market_data_stream(Contract con)
   client_->reqMktData(ret, con, "", false, false, TagValueListSPtr());
   step();
   return ret;
+}
+
+size_t IBClient::start_market_data_stream(std::string symbol)
+{
+  Contract contract;
+  contract.symbol = std::move(symbol);
+  contract.secType = "STK";
+  contract.currency = "USD";
+  contract.exchange = "SMART";
+  return start_market_data_stream(contract);
 }
 
 void IBClient::stop_market_data_stream(size_t index)

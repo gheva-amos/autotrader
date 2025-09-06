@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <string>
 #include <memory>
+#include <atomic>
 #include "DefaultEWrapper.h"
 #include "EClientSocket.h"
 #include "EReader.h"
@@ -28,7 +29,10 @@ public:
   bool is_connected() const;
 
   void start();
+  void stop();
   void step();
+
+  void operator()();
 
   virtual void error(int id, time_t errorTime, int errorCode,const std::string& errorString, const std::string& advancedOrderRejectJson) override;
 
@@ -58,6 +62,7 @@ public:
 
   // Market data
   size_t start_market_data_stream(Contract con);
+  size_t start_market_data_stream(std::string symbol);
   void stop_market_data_stream(size_t index);
   virtual void tickPrice(TickerId tickerId, TickType field, double price, const TickAttrib& attrib) override;
   virtual void tickSize(TickerId tickerId, TickType field, Decimal size) override;
@@ -95,6 +100,8 @@ private:
   ThreadSafeVector<MarketData> mkt_data_;
   ThreadSafeVector<std::vector<Bar>> historic_bars_;
   MPSCQueue<size_t> historical_data_queue_;
+
+  std::atomic<bool> running_;
 
   static int client_id;
 };

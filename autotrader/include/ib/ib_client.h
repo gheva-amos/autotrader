@@ -70,12 +70,22 @@ public:
   virtual void tickString(TickerId tickerId, TickType tickType, const std::string& value) override;
 
   // Historical data
+  size_t request_historical_data(std::string symbol, std::string end="", std::string duration="1 D", std::string bar_size="5 mins");
   size_t request_historical_data(Contract con, std::string end="", std::string duration="1 D", std::string bar_size="5 mins");
   virtual void historicalData(TickerId reqId, const Bar& bar) override;
   virtual void historicalDataEnd(int reqId, const std::string& startDateStr, const std::string& endDateStr) override;
 
   bool next_historical_id(size_t& ret);
   std::vector<Bar> historical_bars(size_t id) const;
+
+  // Scanner ifc
+  virtual void scannerData(int reqId, int rank, const ContractDetails& contractDetails,
+    const std::string& distance, const std::string& benchmark, const std::string& projection,
+    const std::string& legsStr) override;
+  virtual void scannerDataEnd(int reqId) override;
+
+  bool next_scanner_id(size_t& ret);
+  std::vector<ContractDetails> scanner_data(size_t id) const;
 protected:
   EClient* client();
 private:
@@ -99,7 +109,9 @@ private:
   ThreadSafeMap<OrderId, OrderState> order_states_;
   ThreadSafeVector<MarketData> mkt_data_;
   ThreadSafeVector<std::vector<Bar>> historic_bars_;
+  ThreadSafeMap<size_t, std::vector<ContractDetails>> scanner_data_;
   MPSCQueue<size_t> historical_data_queue_;
+  MPSCQueue<size_t> scanner_data_queue_;
 
   std::atomic<bool> running_;
 

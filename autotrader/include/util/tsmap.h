@@ -23,7 +23,6 @@ public:
   }
   V operator[](K key) const
   {
-    std::unique_lock<std::mutex> lock(lock_);
     return map_.at(key);
   }
   V& operator[](K key)

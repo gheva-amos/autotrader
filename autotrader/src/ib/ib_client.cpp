@@ -250,6 +250,17 @@ void IBClient::tickString(TickerId tickerId, TickType tickType, const std::strin
   mkt_data_[tickerId].value(tickType) = value;
 }
 
+size_t IBClient::request_historical_data(std::string symbol, std::string end, std::string duration,
+    std::string bar_size)
+{
+  Contract contract;
+  contract.symbol = symbol;
+  contract.secType = "STK";
+  contract.currency = "USD";
+  contract.exchange = "SMART";
+  return request_historical_data(contract, end, duration, bar_size);
+}
+
 size_t IBClient::request_historical_data(Contract con, std::string end, std::string duration,
     std::string bar_size)
 {
@@ -277,6 +288,28 @@ bool IBClient::next_historical_id(size_t& ret)
 std::vector<Bar> IBClient::historical_bars(size_t id) const
 {
   return historic_bars_[id];
+}
+
+void IBClient::scannerData(int reqId, int rank, const ContractDetails& contractDetails,
+  const std::string& distance, const std::string& benchmark, const std::string& projection,
+  const std::string& legsStr)
+{
+  scanner_data_[reqId].push_back(contractDetails);
+}
+
+void IBClient::scannerDataEnd(int reqId)
+{
+  scanner_data_queue_.push(reqId);
+}
+
+bool IBClient::next_scanner_id(size_t& ret)
+{
+  return scanner_data_queue_.pop(ret);
+}
+
+std::vector<ContractDetails> IBClient::scanner_data(size_t id) const
+{
+  return scanner_data_[id];
 }
 
 } // namespace

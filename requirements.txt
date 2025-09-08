@@ -1,0 +1,12 @@
+ibapi
+pyzmq
+protobuf
+pandas
+torch
+numpy
+matplotlib
+yfinance
+jupyterlab
+backtrader
+zipline-reloaded
+vectorbt

@@ -78,12 +78,6 @@ zmq::send_result_t BaseThread::send(const std::string& msg, bool send_more)
   return socket_.send(zmq::buffer(msg), zmq::send_flags::none);
 }
 
-zmq::send_result_t BaseThread::send(size_t msg, bool send_more)
-{
-  std::string tmp = std::to_string(msg);
-  return send(tmp);
-}
-
 void BaseThread::wait(size_t millisecs)
 {
   std::this_thread::sleep_for(std::chrono::milliseconds(millisecs));
@@ -97,6 +91,16 @@ size_t BaseThread::start_data_for_symbol(const std::string& symbol)
 void BaseThread::stop_data_for_id(size_t id)
 {
   ib_.stop_market_data_stream(id);
+}
+
+size_t BaseThread::request_historical_data(const std::string& symbol)
+{
+  return ib().request_historical_data(symbol);
+}
+
+IBClient& BaseThread::ib()
+{
+  return ib_;
 }
 
 } //namespace

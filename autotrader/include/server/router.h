@@ -14,6 +14,7 @@ public:
 private:
   void process_data_req(std::vector<zmq::message_t>& frames);
   void stop_data_req(std::vector<zmq::message_t>& frames);
+  void process_history_req(std::vector<zmq::message_t>& frames);
 };
 
 } // namespace

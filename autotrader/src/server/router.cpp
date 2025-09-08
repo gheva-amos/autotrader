@@ -33,6 +33,10 @@ void Router::step()
   {
     stop_data_req(frames);
   }
+  else if (verb == "history")
+  {
+    process_history_req(frames);
+  }
 }
 
 void Router::process_data_req(std::vector<zmq::message_t>& frames)
@@ -40,7 +44,7 @@ void Router::process_data_req(std::vector<zmq::message_t>& frames)
   auto symbol = frames[3].to_string();
   size_t req_id = start_data_for_symbol(symbol);
   send(frames[0], true);
-  send(req_id);
+  send_num(req_id);
 }
 
 void Router::stop_data_req(std::vector<zmq::message_t>& frames)
@@ -51,6 +55,14 @@ void Router::stop_data_req(std::vector<zmq::message_t>& frames)
   send(frames[0], true);
   send(frames[3], true);
   send("OK");
+}
+
+void Router::process_history_req(std::vector<zmq::message_t>& frames)
+{
+  auto symbol = frames[3].to_string();
+  size_t req_id = request_historical_data(symbol);
+  send(frames[0], true);
+  send_num(req_id);
 }
 
 } // namespace

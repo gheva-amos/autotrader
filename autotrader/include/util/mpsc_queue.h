@@ -5,6 +5,8 @@
 #include <condition_variable>
 #include <atomic>
 #include <mutex>
+#include <chrono>
+#include "debug.h"
 
 namespace autotrader
 {
@@ -18,12 +20,18 @@ public:
   {
   }
 
+  MPSCQueue(const MPSCQueue&) = delete;
+  MPSCQueue& operator=(const MPSCQueue&) = delete;
+  MPSCQueue(MPSCQueue&&) = delete;
+  MPSCQueue& operator=(MPSCQueue&&) = delete;
+
   size_t push(T value)
   {
-    std::unique_lock<std::mutex> lock(lock_);
     size_t ret{counter_.fetch_add(1, std::memory_order_relaxed)};
-    data_.push(std::move(value));
-    lock.unlock();
+    {
+      std::lock_guard<std::mutex> lock(lock_);
+      data_.push(std::move(value));
+    }
     available_.notify_one();
     return ret;
   }
@@ -31,7 +39,8 @@ public:
   bool pop(T& ret)
   {
     std::unique_lock<std::mutex> lock(lock_);
-    available_.wait(lock, [&]{ return stop_ || !data_.empty(); });
+    available_.wait_for(lock, std::chrono::milliseconds(100), [&]{ return stop_ || !data_.empty(); });
+    //available_.wait(lock, [&]{ return stop_ || !data_.empty(); });
     if (data_.empty())
     {
       return false;
@@ -43,9 +52,7 @@ public:
 
   void stop()
   {
-    std::unique_lock<std::mutex> lock(lock_);
     stop_ = true;
-    lock.unlock();
     available_.notify_all();
   }
 private:

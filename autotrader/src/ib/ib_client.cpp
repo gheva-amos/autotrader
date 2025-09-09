@@ -3,6 +3,7 @@
 #include <thread>
 #include <chrono>
 #include <iostream>
+#include "ScannerSubscription.h"
 #define DEBUG
 #include "debug.h"
 
@@ -288,6 +289,40 @@ bool IBClient::next_historical_id(size_t& ret)
 std::vector<Bar> IBClient::historical_bars(size_t id) const
 {
   return historic_bars_[id];
+}
+
+void IBClient::req_scanner_params()
+{
+  client_->reqScannerParameters();
+}
+
+size_t IBClient::requesr_scanner_subscription()
+{
+  ScannerSubscription ss;
+  ss.instrument = "STK";
+  ss.locationCode = "iSTK.US.MAJOR";
+  ss.scanCode = "HOT_BY_VOLUME";
+  size_t ret{scanner_data_.next_id()};
+  TagValueListSPtr tvlp{new TagValueList()};
+
+  client_->reqScannerSubscription(ret, ss, TagValueListSPtr(), TagValueListSPtr());
+
+  return ret;
+}
+
+void IBClient::scannerParameters(const std::string& xml)
+{
+  scanner_params_.push(xml);
+}
+
+bool IBClient::scanner_params(std::string& ret)
+{
+  return scanner_params_.pop(ret);
+}
+
+void IBClient::cancel_scanner(int tickerId)
+{
+  client_->cancelScannerSubscription(tickerId);
 }
 
 void IBClient::scannerData(int reqId, int rank, const ContractDetails& contractDetails,

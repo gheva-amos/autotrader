@@ -83,6 +83,12 @@ public:
     const std::string& distance, const std::string& benchmark, const std::string& projection,
     const std::string& legsStr) override;
   virtual void scannerDataEnd(int reqId) override;
+  virtual void scannerParameters(const std::string& xml) override;
+  void req_scanner_params();
+  size_t requesr_scanner_subscription();
+  bool scanner_params(std::string&);
+
+  void cancel_scanner(int tickerId);
 
   bool next_scanner_id(size_t& ret);
   std::vector<ContractDetails> scanner_data(size_t id) const;
@@ -112,6 +118,7 @@ private:
   ThreadSafeMap<size_t, std::vector<ContractDetails>> scanner_data_;
   MPSCQueue<size_t> historical_data_queue_;
   MPSCQueue<size_t> scanner_data_queue_;
+  MPSCQueue<std::string> scanner_params_;
 
   std::atomic<bool> running_;
 

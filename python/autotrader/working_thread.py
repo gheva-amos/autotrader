@@ -53,7 +53,6 @@ class WorkingThread:
       events = dict(self.poller.poll(1000))
       if self.socket in events:
         frames = self.socket.recv_multipart()
-        print(frames)
         self.inbox.put(frames)
 
       # Send data out

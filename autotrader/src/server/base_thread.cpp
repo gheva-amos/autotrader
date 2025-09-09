@@ -98,6 +98,11 @@ size_t BaseThread::request_historical_data(const std::string& symbol)
   return ib().request_historical_data(symbol);
 }
 
+void BaseThread::req_scanner_params()
+{
+  ib().req_scanner_params();
+}
+
 IBClient& BaseThread::ib()
 {
   return ib_;

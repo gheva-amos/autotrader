@@ -37,6 +37,10 @@ void Router::step()
   {
     process_history_req(frames);
   }
+  else if (verb == "scanner_params")
+  {
+    process_scanner_params_req(frames);
+  }
 }
 
 void Router::process_data_req(std::vector<zmq::message_t>& frames)
@@ -63,6 +67,13 @@ void Router::process_history_req(std::vector<zmq::message_t>& frames)
   size_t req_id = request_historical_data(symbol);
   send(frames[0], true);
   send_num(req_id);
+}
+
+void Router::process_scanner_params_req(std::vector<zmq::message_t>& frames)
+{
+  req_scanner_params();
+  send(frames[0], true);
+  send("OK");
 }
 
 } // namespace

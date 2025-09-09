@@ -26,13 +26,13 @@ int main(int argc, char** argv)
 
   zmq::context_t ctx{1};
   autotrader::BaseThread::start_all_threads();
-  autotrader::Router router{ctx, "tcp://0.0.0.0:7001", client};
+  autotrader::Router router{ctx, "tcp://0.0.0.0:7001", std::ref(client)};
   std::thread router_thread{std::ref(router)};
 
-  autotrader::Pub pub{ctx, "tcp://0.0.0.0:7002", client};
+  autotrader::Pub pub{ctx, "tcp://0.0.0.0:7002", std::ref(client)};
   std::thread pub_thread{std::ref(pub)};
 
-  autotrader::Pull pull{ctx, "tcp://0.0.0.0:7003", client};
+  autotrader::Pull pull{ctx, "tcp://0.0.0.0:7003", std::ref(client)};
   std::thread pull_thread{std::ref(pull)};
 
   std::cout << "Server running, press Enter to quit\n";

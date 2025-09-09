@@ -35,6 +35,7 @@ protected:
   size_t start_data_for_symbol(const std::string& symbol);
   size_t request_historical_data(const std::string& symbol);
   void stop_data_for_id(size_t id);
+  void req_scanner_params();
 private:
   zmq::socket_t socket_;
   IBClient& ib_;

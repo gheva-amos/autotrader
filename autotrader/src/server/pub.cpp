@@ -1,4 +1,5 @@
 #include "server/pub.h"
+#define DEBUG
 #include "debug.h"
 
 namespace autotrader
@@ -11,7 +12,6 @@ Pub::Pub(zmq::context_t& ctx, std::string address, IBClient& ib) :
 
 void Pub::step()
 {
-  // TODO push data to listeners
   size_t id;
   if (ib().next_historical_id(id))
   {
@@ -37,6 +37,14 @@ void Pub::step()
     for (auto detail : details)
     {
     }
+  }
+  std::string xml;
+  if (ib().scanner_params(xml))
+  {
+    DBG_MSG(xml) << std::endl;
+    send("scanner_params", true);
+    send(xml, true);
+    send("OK");
   }
 }
 

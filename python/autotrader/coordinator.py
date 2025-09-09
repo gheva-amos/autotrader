@@ -23,6 +23,10 @@ class Coordinator(WorkingThread):
     frames = ["history".encode(), symbol.encode()]
     return self.send_frames(frames)
 
+  def request_scanner_params(self):
+    frames = ["scanner_params".encode()]
+    return self.send_frames(frames)
+
   def step(self):
     try:
       payload = self.inbox.get_nowait()

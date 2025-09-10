@@ -6,7 +6,6 @@
 #include <atomic>
 #include <mutex>
 #include <chrono>
-#include "debug.h"
 
 namespace autotrader
 {

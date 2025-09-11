@@ -30,4 +30,6 @@ class ATDriver:
 
   def run(self):
     while not self.stop.is_set():
+      if self.preprocessor.combos:
+        print (self.preprocessor.combos[3])
       time.sleep(1)

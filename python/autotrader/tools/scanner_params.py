@@ -4,9 +4,12 @@ class ScannerParams:
   def __init__(self, xml):
     self.root = ET.fromstring(xml)
     self.instruments = []
+    self.instrument_map = {}
     self.locations = []
     self.scan_types = []
     self.filters = []
+    self.filter_fields = {}
+    self.location_instruments = {}
     self.parse()
 
   @staticmethod
@@ -25,9 +28,12 @@ class ScannerParams:
     for location in locations:
       name = self.text(location, 'displayName')
       code = self.text(location, 'locationCode')
-      instrument = self.text(location, 'instruments')
+      instruments = self.text(location, 'instruments').split(',')
       route_exchange = self.text(location, 'routeExchange')
-      self.locations.append({'name': name, 'code': code, 'instrument': instrument, 'route_exchange': route_exchange})
+      self.locations.append({'name': name, 'code': code, 'instruments': instruments, 'route_exchange': route_exchange})
+      if code not in self.location_instruments:
+        self.location_instruments[code] = []
+      self.location_instruments[code].append(instruments)
       children = location.find('./LocationTree')
       if children is not None:
         self.walk_location_tree(children)
@@ -44,6 +50,7 @@ class ScannerParams:
           "name": self.text(inst, "name"),
           "group": self.text(inst, "group"),
           })
+        self.instrument_map[self.text(inst, "type")] = self.filter_list(self.text(inst, "filters"))
 
   def parse_combo_fields(self, field):
     ret = []
@@ -60,8 +67,12 @@ class ScannerParams:
     ret['name'] = self.text(field, 'displayName')
     combo_fields = field.find('./ComboValues')
     if combo_fields is None:
-      ret['min'] = self.text(field, 'minValue')
-      ret['max'] = self.text(field, 'maxValue')
+      mini = self.text(field, 'minValue')
+      maxi = self.text(field, 'maxValue')
+      if mini:
+        ret['min'] = mini
+      if maxi:
+        ret['max'] = maxi
     else:
       ret['combo'] = self.parse_combo_fields(combo_fields)
     return ret
@@ -73,6 +84,7 @@ class ScannerParams:
     elem['access'] = self.text(filt, 'access')
     field = filt.find('./AbstractField')
     elem['fields'] = (self.parse_field(field))
+    self.filter_fields[elem['id']] = elem['fields']
     self.filters.append(elem)
 
   def parse_range_filter(self, filt):
@@ -80,6 +92,7 @@ class ScannerParams:
     elem['id'] = self.text(filt, 'id')
     fields = filt.findall('./AbstractField')
     elem['fields'] = (self.parse_field(fields[0]), self.parse_field(fields[1]))
+    self.filter_fields[elem['id']] = elem['fields']
     self.filters.append(elem)
 
   def parse_filters(self):

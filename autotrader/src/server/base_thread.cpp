@@ -103,6 +103,11 @@ void BaseThread::req_scanner_params()
   ib().req_scanner_params();
 }
 
+size_t BaseThread::req_scanner(const std::string& instr, const std::string& loc, const std::string& code)
+{
+  return ib().req_scanner_subscription(instr, loc, code);
+}
+
 IBClient& BaseThread::ib()
 {
   return ib_;

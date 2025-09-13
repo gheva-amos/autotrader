@@ -85,7 +85,7 @@ public:
   virtual void scannerDataEnd(int reqId) override;
   virtual void scannerParameters(const std::string& xml) override;
   void req_scanner_params();
-  size_t requesr_scanner_subscription();
+  size_t req_scanner_subscription(const std::string& instr, const std::string& loc, const std::string& code);
   bool scanner_params(std::string&);
 
   void cancel_scanner(int tickerId);

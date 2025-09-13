@@ -41,6 +41,10 @@ void Router::step()
   {
     process_scanner_params_req(frames);
   }
+  else if (verb == "scanner")
+  {
+    process_scanner_req(frames);
+  }
 }
 
 void Router::process_data_req(std::vector<zmq::message_t>& frames)
@@ -73,6 +77,17 @@ void Router::process_scanner_params_req(std::vector<zmq::message_t>& frames)
 {
   req_scanner_params();
   send(frames[0], true);
+  send("OK");
+}
+
+void Router::process_scanner_req(std::vector<zmq::message_t>& frames)
+{
+  auto instr{frames[3].to_string()};
+  auto loc{frames[4].to_string()};
+  auto code{frames[5].to_string()};
+  size_t ret{req_scanner(instr, loc, code)};
+  send(frames[0], true);
+  send_num(ret, true);
   send("OK");
 }
 

@@ -296,16 +296,17 @@ void IBClient::req_scanner_params()
   client_->reqScannerParameters();
 }
 
-size_t IBClient::requesr_scanner_subscription()
+size_t IBClient::req_scanner_subscription(const std::string& instr, const std::string& loc,
+    const std::string& code)
 {
   ScannerSubscription ss;
-  ss.instrument = "STK";
-  ss.locationCode = "iSTK.US.MAJOR";
-  ss.scanCode = "HOT_BY_VOLUME";
+  ss.instrument = instr;
+  ss.locationCode = loc,
+  ss.scanCode = code;
   size_t ret{scanner_data_.next_id()};
   TagValueListSPtr tvlp{new TagValueList()};
 
-  client_->reqScannerSubscription(ret, ss, TagValueListSPtr(), TagValueListSPtr());
+  client_->reqScannerSubscription(ret, ss, TagValueListSPtr(), tvlp);
 
   return ret;
 }

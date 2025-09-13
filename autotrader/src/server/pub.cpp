@@ -36,6 +36,13 @@ void Pub::step()
     auto details = ib().scanner_data(id);
     for (auto detail : details)
     {
+      Contract& con = detail.contract;
+      send("scanner", true);
+      send_num(id, true);
+      send(con.symbol, true);
+      send_num(con.conId, true);
+      send(con.secType, true);
+      send("OK");
     }
   }
   std::string xml;

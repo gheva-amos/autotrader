@@ -83,6 +83,7 @@ class ScannerParams:
     elem['id'] = self.text(filt, 'id')
     elem['category'] = self.text(filt, 'category')
     elem['access'] = self.text(filt, 'access')
+    elem['name'] = self.text(filt, 'displayName')
     field = filt.find('./AbstractField')
     elem['fields'] = (self.parse_field(field))
     self.filter_fields[elem['id']] = elem['fields']
@@ -91,6 +92,7 @@ class ScannerParams:
   def parse_range_filter(self, filt):
     elem = {}
     elem['id'] = self.text(filt, 'id')
+    elem['name'] = self.text(filt, 'displayName')
     fields = filt.findall('./AbstractField')
     elem['fields'] = (self.parse_field(fields[0]), self.parse_field(fields[1]))
     self.filter_fields[elem['id']] = elem['fields']

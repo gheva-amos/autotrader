@@ -24,6 +24,7 @@ class PreProcessor(WorkingThread):
     for st in self.scanner_params.scan_types:
       scan_type = {}
       scan_type['code'] = st['code']
+      scan_type['name'] = st['name']
       filters = []
       locations = []
       scan_type['instruments'] = st['instruments']

@@ -41,7 +41,6 @@ void Pub::step()
   std::string xml;
   if (ib().scanner_params(xml))
   {
-    DBG_MSG(xml) << std::endl;
     send("scanner_params", true);
     send(xml, true);
     send("OK");

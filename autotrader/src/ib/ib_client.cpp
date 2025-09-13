@@ -336,6 +336,7 @@ void IBClient::scannerData(int reqId, int rank, const ContractDetails& contractD
 void IBClient::scannerDataEnd(int reqId)
 {
   scanner_data_queue_.push(reqId);
+  cancel_scanner(reqId);
 }
 
 bool IBClient::next_scanner_id(size_t& ret)

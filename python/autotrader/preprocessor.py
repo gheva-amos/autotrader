@@ -16,6 +16,8 @@ class PreProcessor(WorkingThread):
       return
     if frames[0].decode() == "scanner_params":
       self.handle_scanner_params(frames[1].decode())
+    if frames[0].decode() == "scanner":
+      print(frames)
 
   def handle_scanner_params(self, xml):
     self.scanner_params = ScannerParams(xml)
@@ -28,8 +30,8 @@ class PreProcessor(WorkingThread):
       for inst in st['instruments']:
         if inst in self.scanner_params.instrument_map:
           filters.append(self.scanner_params.instrument_map[inst])
-        if inst in self.scanner_params.location_instruments:
-          locations.append(self.scanner_params.location_instruments[inst])
+        if inst in self.scanner_params.instrument_locations:
+          locations.append(self.scanner_params.instrument_locations[inst])
       scan_type['filter_fields'] = []
       for filt_list in filters:
         for filt in filt_list:

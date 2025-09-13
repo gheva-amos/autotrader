@@ -27,6 +27,14 @@ class Coordinator(WorkingThread):
     frames = ["scanner_params".encode()]
     return self.send_frames(frames)
 
+  def request_scanner(self, inst, loc, code):
+    frames = []
+    frames.append("scanner".encode())
+    frames.append(inst.encode())
+    frames.append(loc[0].encode())
+    frames.append(code.encode())
+    return self.send_frames(frames)
+
   def step(self):
     try:
       payload = self.inbox.get_nowait()

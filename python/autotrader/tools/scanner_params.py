@@ -9,7 +9,7 @@ class ScannerParams:
     self.scan_types = []
     self.filters = []
     self.filter_fields = {}
-    self.location_instruments = {}
+    self.instrument_locations = {}
     self.parse()
 
   @staticmethod
@@ -31,9 +31,10 @@ class ScannerParams:
       instruments = self.text(location, 'instruments').split(',')
       route_exchange = self.text(location, 'routeExchange')
       self.locations.append({'name': name, 'code': code, 'instruments': instruments, 'route_exchange': route_exchange})
-      if code not in self.location_instruments:
-        self.location_instruments[code] = []
-      self.location_instruments[code].append(instruments)
+      for inst in instruments:
+        if inst not in self.instrument_locations:
+          self.instrument_locations[inst] = []
+        self.instrument_locations[inst].append(code)
       children = location.find('./LocationTree')
       if children is not None:
         self.walk_location_tree(children)

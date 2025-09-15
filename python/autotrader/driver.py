@@ -1,5 +1,6 @@
 from autotrader.coordinator import Coordinator
 from autotrader.preprocessor import PreProcessor
+from ui.at_gui import ATGui
 import threading
 import time
 import sys
@@ -8,20 +9,25 @@ class ATDriver:
   def __init__(self, router, publisher, instrument):
     self.coordinator = Coordinator(router)
     self.preprocessor = PreProcessor(publisher)
+    self.ui = ATGui(self)
     self.thread = None
     self.stop = threading.Event()
     self.scanners_requested = False
     self.scanners_selected = False
     self.scanner_list = []
     self.instrument = instrument
+    self.filter_list = {}
 
   def start(self):
     self.coordinator.start()
     self.preprocessor.start()
-    self.coordinator.request_scanner_params()
     if self.thread is None:
       self.thread = threading.Thread(target=self.run, name="autotrader", daemon=True)
       self.thread.start()
+    self.ui.mainloop()
+
+  def request_scanner_params(self):
+    self.coordinator.request_scanner_params()
 
   def stop_thread(self, timeout=1.0):
     self.stop.set()
@@ -40,34 +46,33 @@ class ATDriver:
       item = item[0]
     return item
 
+  def request_scanner(self, scanner):
+    code = scanner[0]
+    instr = self.instrument
+    loc = self.unwrap(scanner[1][0])
+    self.coordinator.request_scanner(instr, loc, code)
+
   def request_scanners(self):
     for scanner in self.scanner_list:
-      code = scanner[0]
-      instr = self.instrument
-      loc = self.unwrap(scanner[1][0])
-      self.coordinator.request_scanner(instr, loc, code)
+      self.request_scanner(scanner)
 
-  def selct_scanners(self):
+  def select_scanners(self):
     scanners = [(elem['code'], elem['locations'], elem['instruments'], elem['name']) for elem in self.preprocessor.combos if self.instrument in elem['instruments']]
-    i = 0
-    line = ""
-    for scanner in scanners:
-      line += f"{i} - {scanner[3]}\t"
-      i += 1
-      if i % 4 == 0:
-        print(line)
-        line = ""
-    print('Select up to 10 filters (one per line), hit Ctrl+d when done')
-    selection = sys.stdin.read()  
-    selection = selection.split('\n')
-    selection = [int(s) for s in selection if s][:10]
-    print (selection)
-    self.scanner_list = [scanners[i] for i in selection]
+    self.ui.add_scanner_list(scanners)
+
+  def get_filter_list(self):
+    filters = self.preprocessor.scanner_params.instrument_map[self.instrument]
+    filter_fields = self.preprocessor.scanner_params.filter_fields
+    for filt in filter_fields:
+      if filt not in filters:
+        continue
+      self.filter_list[filt] = filter_fields[filt]
+    return self.filter_list
 
   def run(self):
     while not self.stop.is_set():
       if self.preprocessor.combos and not self.scanners_selected:
-        self.selct_scanners()
+        self.select_scanners()
         self.scanners_selected = True
       elif self.scanner_list and not self.scanners_requested:
         self.request_scanners()

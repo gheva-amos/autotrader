@@ -85,7 +85,7 @@ class ScannerParams:
     elem['access'] = self.text(filt, 'access')
     elem['name'] = self.text(filt, 'displayName')
     field = filt.find('./AbstractField')
-    elem['fields'] = (self.parse_field(field))
+    elem['fields'] = (self.parse_field(field),)
     self.filter_fields[elem['id']] = elem['fields']
     self.filters.append(elem)
 

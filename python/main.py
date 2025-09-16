@@ -5,7 +5,6 @@ def main(router_host, publisher_host, instrument):
   driver = ATDriver(router_host, publisher_host, instrument)
   
   driver.start()
-  time.sleep(30)
 
   driver.stop_thread()
 

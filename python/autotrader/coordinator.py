@@ -27,12 +27,15 @@ class Coordinator(WorkingThread):
     frames = ["scanner_params".encode()]
     return self.send_frames(frames)
 
-  def request_scanner(self, inst, loc, code):
+  def request_scanner(self, inst, loc, code, apply_filters={}):
     frames = []
     frames.append("scanner".encode())
     frames.append(inst.encode())
     frames.append(loc[0].encode())
     frames.append(code.encode())
+    for filt in apply_filters:
+      frames.append(filt.encode())
+      frames.append(apply_filters[filt].encode())
     return self.send_frames(frames)
 
   def step(self):

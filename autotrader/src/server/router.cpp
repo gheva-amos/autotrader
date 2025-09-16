@@ -85,7 +85,12 @@ void Router::process_scanner_req(std::vector<zmq::message_t>& frames)
   auto instr{frames[3].to_string()};
   auto loc{frames[4].to_string()};
   auto code{frames[5].to_string()};
-  size_t ret{req_scanner(instr, loc, code)};
+  std::vector<std::string> apply_filters;
+  for (size_t i{6}; i < frames.size(); ++i)
+  {
+    apply_filters.push_back(frames[i].to_string());
+  }
+  size_t ret{req_scanner(instr, loc, code, apply_filters)};
   send(frames[0], true);
   send_num(ret, true);
   send("OK");

@@ -46,11 +46,11 @@ class ATDriver:
       item = item[0]
     return item
 
-  def request_scanner(self, scanner):
+  def request_scanner(self, scanner, apply_filters={}):
     code = scanner[0]
     instr = self.instrument
     loc = self.unwrap(scanner[1][0])
-    self.coordinator.request_scanner(instr, loc, code)
+    self.coordinator.request_scanner(instr, loc, code, apply_filters)
 
   def request_scanners(self):
     for scanner in self.scanner_list:

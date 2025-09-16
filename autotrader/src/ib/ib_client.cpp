@@ -297,16 +297,20 @@ void IBClient::req_scanner_params()
 }
 
 size_t IBClient::req_scanner_subscription(const std::string& instr, const std::string& loc,
-    const std::string& code)
+    const std::string& code, std::vector<std::string>& apply_filters)
 {
   ScannerSubscription ss;
   ss.instrument = instr;
   ss.locationCode = loc,
   ss.scanCode = code;
   size_t ret{scanner_data_.next_id()};
-  TagValueListSPtr tvlp{new TagValueList()};
+  TagValueListSPtr filters{new TagValueList()};
 
-  client_->reqScannerSubscription(ret, ss, TagValueListSPtr(), tvlp);
+  for (size_t i{0}; i < apply_filters.size(); i += 2)
+  {
+    filters->push_back(TagValueSPtr(new TagValue(apply_filters[i], apply_filters[i + 1])));
+  }
+  client_->reqScannerSubscription(ret, ss, TagValueListSPtr(), filters);
 
   return ret;
 }
@@ -335,8 +339,8 @@ void IBClient::scannerData(int reqId, int rank, const ContractDetails& contractD
 
 void IBClient::scannerDataEnd(int reqId)
 {
-  scanner_data_queue_.push(reqId);
   cancel_scanner(reqId);
+  scanner_data_queue_.push(reqId);
 }
 
 bool IBClient::next_scanner_id(size_t& ret)

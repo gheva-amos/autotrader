@@ -350,7 +350,13 @@ bool IBClient::next_scanner_id(size_t& ret)
 
 std::vector<ContractDetails> IBClient::scanner_data(size_t id) const
 {
-  return scanner_data_[id];
+  try
+  {
+    return scanner_data_[id];
+  } catch (std::out_of_range& e)
+  {
+    return {};
+  }
 }
 
 } // namespace

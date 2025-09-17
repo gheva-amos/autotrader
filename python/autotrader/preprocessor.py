@@ -8,6 +8,9 @@ class PreProcessor(WorkingThread):
     super().__init__("preprocessor", host, zmq.SUB)
     self.socket.setsockopt(zmq.SUBSCRIBE, b"")
     self.combos = []
+    self.scanners = {}
+    self.symbols = set()
+    self.bars = {}
 
   def step(self):
     try:
@@ -16,8 +19,20 @@ class PreProcessor(WorkingThread):
       return
     if frames[0].decode() == "scanner_params":
       self.handle_scanner_params(frames[1].decode())
-    if frames[0].decode() == "scanner":
-      print(frames)
+    elif frames[0].decode() == "scanner":
+      self.handle_scanner(frames)
+    elif frames[0].decode() == 'history':
+      if frames[1].decode() not in self.bars:
+        self.bars[frames[1].decode()] = []
+      self.bars[frames[1].decode()].append([bar_elem.decode() for bar_elem in frames[2:10]])
+
+  def handle_scanner(self, frames):
+    key = frames[1].decode()
+    if key not in self.scanners:
+      self.scanners[key] = []
+    elem = {"symbol": frames[2].decode(), "conId": frames[3].decode()}
+    self.scanners[key].append(elem)
+    self.symbols.add((elem['symbol'], elem['conId']))
 
   def handle_scanner_params(self, xml):
     self.scanner_params = ScannerParams(xml)

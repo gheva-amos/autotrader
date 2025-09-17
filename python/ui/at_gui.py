@@ -4,6 +4,7 @@ import queue
 from ui.start_page import StartPage
 from ui.scanner_select import ScannerSelect
 from ui.scanner_config import ScannerConfig
+from ui.instrument_select import InstrumentSelect
 
 class ATGui(tk.Tk):
   def __init__(self, driver):
@@ -19,10 +20,12 @@ class ATGui(tk.Tk):
     self.start_page = StartPage(self)
     self.scanner_select = ScannerSelect(self)
     self.scanner_config = ScannerConfig(self)
+    self.instrument_select = InstrumentSelect(self)
 
     self.pages = {"StartPage": self.start_page,
       "ScannerSelect": self.scanner_select,
       "ScannerConfig": self.scanner_config,
+      "InstrumentSelect": self.instrument_select,
     }
     self.show('StartPage')
 
@@ -41,10 +44,20 @@ class ATGui(tk.Tk):
     self.configure_index = index
     self.inbox.put('config_filter')
 
-  def show(self, name, **kwargs):
+  def select_instruments(self):
+    self.inbox.put('select_instrument')
+
+  def process_instruments(self, instruments):
+    if not instruments:
+      return
+    self.driver.process_instruments(instruments)
+
+  def show(self, name):#, **kwargs):
     page = self.pages[name]
     if self.current_page:
       self.current_page.pack_forget()
+    if name == "StartPage":
+      self.driver.scanner_select = False
     self.current_page = page
     self.current_page.pack(fill="both", expand=True)
 
@@ -55,6 +68,9 @@ class ATGui(tk.Tk):
     if command == 'config_filter':
       self.show("ScannerConfig")
       self.scanner_config.populate(self.configure_index)
+    if command == 'select_instrument':
+      self.show('InstrumentSelect')
+      self.instrument_select.populate(self.driver.instrument_list())
 
   def poll_inbox(self):
     try:

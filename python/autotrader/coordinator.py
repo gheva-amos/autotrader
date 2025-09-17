@@ -44,8 +44,6 @@ class Coordinator(WorkingThread):
     except queue.Empty:
       return
 
-    print(payload)
-
 if __name__ == "__main__":
   coordinator = Coordinator("tcp://localhost:7001")
   coordinator.start()

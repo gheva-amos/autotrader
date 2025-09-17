@@ -69,11 +69,25 @@ class ATDriver:
       self.filter_list[filt] = filter_fields[filt]
     return self.filter_list
 
+  def instrument_list(self):
+    return [inst[0] for inst in self.preprocessor.symbols]
+
+  def process_instruments(self, instruments):
+    for inst in instruments:
+      self.coordinator.request_historical_data(inst)
+
+  def handle_bars(self):
+    while self.preprocessor.bars:
+      key, bars = self.preprocessor.bars.popitem()
+      print(bars)
+
   def run(self):
     while not self.stop.is_set():
       if self.preprocessor.combos and not self.scanners_selected:
         self.select_scanners()
         self.scanners_selected = True
+      if self.preprocessor.bars:
+        self.handle_bars()
       elif self.scanner_list and not self.scanners_requested:
         self.request_scanners()
         self.scanners_requested = True

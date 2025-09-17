@@ -70,8 +70,8 @@ public:
   virtual void tickString(TickerId tickerId, TickType tickType, const std::string& value) override;
 
   // Historical data
-  size_t request_historical_data(std::string symbol, std::string end="", std::string duration="1 D", std::string bar_size="5 mins");
-  size_t request_historical_data(Contract con, std::string end="", std::string duration="1 D", std::string bar_size="5 mins");
+  size_t request_historical_data(std::string symbol, std::string end="", std::string duration="1 Y", std::string bar_size="1 day");
+  size_t request_historical_data(Contract con, std::string end="", std::string duration="1 Y", std::string bar_size="1 day");
   virtual void historicalData(TickerId reqId, const Bar& bar) override;
   virtual void historicalDataEnd(int reqId, const std::string& startDateStr, const std::string& endDateStr) override;
 

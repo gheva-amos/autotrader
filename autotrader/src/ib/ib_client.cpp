@@ -266,6 +266,7 @@ size_t IBClient::request_historical_data(Contract con, std::string end, std::str
     std::string bar_size)
 {
   size_t ret{historic_bars_.push_back(std::vector<Bar>{})};
+  history_symbols_[ret] = con.symbol;
   client_->reqHistoricalData(ret, con, end, duration, bar_size, "TRADES", 1, 1, false,
       TagValueListSPtr{});
   return ret;
@@ -286,9 +287,9 @@ bool IBClient::next_historical_id(size_t& ret)
   return historical_data_queue_.pop(ret);
 }
 
-std::vector<Bar> IBClient::historical_bars(size_t id) const
+std::pair<std::string, std::vector<Bar>> IBClient::historical_bars(size_t id) const
 {
-  return historic_bars_[id];
+  return std::make_pair(history_symbols_[id], historic_bars_[id]);
 }
 
 void IBClient::req_scanner_params()

@@ -76,7 +76,7 @@ public:
   virtual void historicalDataEnd(int reqId, const std::string& startDateStr, const std::string& endDateStr) override;
 
   bool next_historical_id(size_t& ret);
-  std::vector<Bar> historical_bars(size_t id) const;
+  std::pair<std::string, std::vector<Bar>> historical_bars(size_t id) const;
 
   // Scanner ifc
   virtual void scannerData(int reqId, int rank, const ContractDetails& contractDetails,
@@ -114,6 +114,7 @@ private:
   ThreadSafeVector<std::vector<std::string>> symbols_;
   ThreadSafeVector<OrderId> order_ids_;
   ThreadSafeMap<OrderId, OrderState> order_states_;
+  ThreadSafeMap<size_t, std::string> history_symbols_;
   ThreadSafeVector<MarketData> mkt_data_;
   ThreadSafeVector<std::vector<Bar>> historic_bars_;
   ThreadSafeMap<size_t, std::vector<ContractDetails>> scanner_data_;

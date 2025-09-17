@@ -16,10 +16,10 @@ void Pub::step()
   if (ib().next_historical_id(id))
   {
     auto bars = ib().historical_bars(id);
-    for (auto bar : bars)
+    for (auto bar : bars.second)
     {
       send("history", true);
-      send_num(id, true);
+      send(bars.first, true);
       send(bar.time, true);
       send_num(bar.high, true);
       send_num(bar.low, true);

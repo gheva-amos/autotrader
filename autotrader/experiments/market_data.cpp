@@ -34,7 +34,7 @@ int main(int argc, char** argv)
   size_t id;
   if (client.next_historical_id(id))
   {
-    auto bars = client.historical_bars(id);
+    auto bars = client.historical_bars(id).second;
     for (auto bar : bars)
     {
       DBG_MSG(__func__) << 

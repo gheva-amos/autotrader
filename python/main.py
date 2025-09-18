@@ -25,11 +25,12 @@ if __name__ == "__main__":
   parser.add_argument('--router', nargs=1, default='tcp://localhost:7001', help='the url for the router')
   parser.add_argument('--preprocessor', nargs=1, default='tcp://localhost:7002', help='the url for the preprocessor')
   parser.add_argument('--distributor', nargs=1, default='tcp://*:7007', help='the url for the distributor')
-  parser.add_argument('--collector', nargs=1, default='tcp://localhost:7003', help='the url for the collector')
+  parser.add_argument('--collector', nargs=1, default='tcp://*:7006', help='the url for the collector')
   parser.add_argument('--instrument', nargs=1, default='STK', help='the instrument to trade')
   parser.add_argument("--modules", nargs="*", help='list of models to load')
 
   args = parser.parse_args()
+
   for module in args.modules:
     m = load_module(module)
     if hasattr(m, "main"):

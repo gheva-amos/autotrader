@@ -20,7 +20,7 @@ class WorkingThread:
     self.bind = bind
 
   def set_send_socket(self):
-    return self.socket
+    return None
 
   def start(self):
     if self.thread is None:
@@ -36,12 +36,16 @@ class WorkingThread:
   def connect(self):
     if self.bind:
       self.socket.bind(self.host)
-      if self.socket != self.send_socket:
-        self.send_socket.connect(self.send_host)
+      if not self.send_socket:
+        self.send_socket = self.socket
+      else:
+        self.send_socket.bind(self.send_host)
     else:
       self.socket.connect(self.host)
-      if self.socket != self.send_socket:
-        self.send_socket.bind(self.send_host)
+      if not self.send_socket:
+        self.send_socket = self.socket
+      else:
+        self.send_socket.connect(self.send_host)
     self.poller.register(self.socket, zmq.POLLIN)
     self.socket.setsockopt(zmq.RCVTIMEO, 1000)
 

@@ -5,7 +5,7 @@ import threading
 import queue
 
 class WorkingThread:
-  def __init__(self, name, host, zmq_type, ctx=None):
+  def __init__(self, name, host, zmq_type, ctx=None, bind=False):
     self.ctx = ctx or zmq.Context.instance()
     self.socket = self.ctx.socket(zmq_type)
     self.host = host
@@ -15,6 +15,7 @@ class WorkingThread:
     self.stop = threading.Event()
     self.work = queue.Queue()
     self.inbox = queue.Queue()
+    self.bind = bind
 
   def start(self):
     if self.thread is None:
@@ -28,7 +29,10 @@ class WorkingThread:
       self.thread = None
 
   def connect(self):
-    self.socket.connect(self.host)
+    if self.bind:
+      self.socket.bind(self.host)
+    else:
+      self.socket.connect(self.host)
     self.poller.register(self.socket, zmq.POLLIN)
     self.socket.setsockopt(zmq.RCVTIMEO, 1000)
 

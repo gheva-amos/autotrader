@@ -1,14 +1,17 @@
 from autotrader.coordinator import Coordinator
 from autotrader.preprocessor import PreProcessor
+from autotrader.distributor import Distributor
 from ui.at_gui import ATGui
 import threading
 import time
 import sys
+import json
 
 class ATDriver:
-  def __init__(self, router, publisher, instrument):
+  def __init__(self, router, publisher, dist, instrument):
     self.coordinator = Coordinator(router)
     self.preprocessor = PreProcessor(publisher)
+    self.distributor = Distributor(dist)
     self.ui = ATGui(self)
     self.thread = None
     self.stop = threading.Event()
@@ -21,6 +24,7 @@ class ATDriver:
   def start(self):
     self.coordinator.start()
     self.preprocessor.start()
+    self.distributor.start()
     if self.thread is None:
       self.thread = threading.Thread(target=self.run, name="autotrader", daemon=True)
       self.thread.start()
@@ -34,6 +38,7 @@ class ATDriver:
     if self.thread is not None:
       self.thread.join(timeout)
       self.thread = None
+    self.distributor.stop_thread()
     self.preprocessor.stop_thread()
     self.coordinator.stop_thread()
 
@@ -79,7 +84,20 @@ class ATDriver:
   def handle_bars(self):
     while self.preprocessor.bars:
       key, bars = self.preprocessor.bars.popitem()
-      print(bars)
+      for bar in bars:
+        msg = {
+          'symbol': key,
+          'date': bar[0],
+          'high': bar[1],
+          'low': bar[2],
+          'open': bar[3],
+          'close': bar[4],
+          'wap': bar[5],
+          'volume': bar[6],
+          'count': bar[7],
+        }
+        self.distributor.send_frames(['historical_bar'.encode(), json.dumps(msg).encode()])
+
 
   def run(self):
     while not self.stop.is_set():

@@ -1,4 +1,4 @@
-from autotrader.working_thread import WorkingThread
+from autotrader.lib.working_thread import WorkingThread
 import zmq
 import time
 import queue

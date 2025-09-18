@@ -1,4 +1,4 @@
-from autotrader.working_thread import WorkingThread
+from autotrader.lib.working_thread import WorkingThread
 from autotrader.tools.scanner_params import ScannerParams
 import zmq
 import queue

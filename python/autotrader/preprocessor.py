@@ -5,7 +5,7 @@ import queue
 
 class PreProcessor(WorkingThread):
   def __init__(self, host):
-    super().__init__("preprocessor", host, zmq.SUB)
+    super().__init__("preprocessor", host, host, zmq.SUB)
     self.socket.setsockopt(zmq.SUBSCRIBE, b"")
     self.combos = []
     self.scanners = {}

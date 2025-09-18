@@ -5,7 +5,7 @@ import queue
 
 class Coordinator(WorkingThread):
   def __init__(self, host):
-    super().__init__("coordinator", host, zmq.DEALER)
+    super().__init__("coordinator", host, host, zmq.DEALER)
 
   def status(self):
     frames = ["status".encode()]

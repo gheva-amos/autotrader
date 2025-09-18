@@ -5,10 +5,12 @@ import threading
 import queue
 
 class WorkingThread:
-  def __init__(self, name, host, zmq_type, ctx=None, bind=False):
+  def __init__(self, name, host, send_host,  zmq_type, ctx=None, bind=False):
     self.ctx = ctx or zmq.Context.instance()
     self.socket = self.ctx.socket(zmq_type)
+    self.send_socket = self.set_send_socket()
     self.host = host
+    self.send_host = send_host
     self.poller = zmq.Poller()
     self.name = name
     self.thread = None
@@ -16,6 +18,9 @@ class WorkingThread:
     self.work = queue.Queue()
     self.inbox = queue.Queue()
     self.bind = bind
+
+  def set_send_socket(self):
+    return self.socket
 
   def start(self):
     if self.thread is None:
@@ -31,8 +36,12 @@ class WorkingThread:
   def connect(self):
     if self.bind:
       self.socket.bind(self.host)
+      if self.socket != self.send_socket:
+        self.send_socket.connect(self.send_host)
     else:
       self.socket.connect(self.host)
+      if self.socket != self.send_socket:
+        self.send_socket.bind(self.send_host)
     self.poller.register(self.socket, zmq.POLLIN)
     self.socket.setsockopt(zmq.RCVTIMEO, 1000)
 
@@ -54,7 +63,7 @@ class WorkingThread:
     self.setup()
     while not self.stop.is_set():
       # get data sent to us:
-      events = dict(self.poller.poll(1000))
+      events = dict(self.poller.poll(10))
       if self.socket in events:
         frames = self.socket.recv_multipart()
         self.inbox.put(frames)
@@ -65,7 +74,7 @@ class WorkingThread:
       except queue.Empty:
         pass
       else:
-        self.socket.send_multipart(payload)
+        self.send_socket.send_multipart(payload)
       
       self.step()
 

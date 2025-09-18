@@ -1,6 +1,7 @@
 from autotrader.coordinator import Coordinator
 from autotrader.preprocessor import PreProcessor
 from autotrader.distributor import Distributor
+from autotrader.collector import Collector
 from ui.at_gui import ATGui
 import threading
 import time
@@ -8,10 +9,11 @@ import sys
 import json
 
 class ATDriver:
-  def __init__(self, router, publisher, dist, instrument):
+  def __init__(self, router, publisher, dist, col,  instrument):
     self.coordinator = Coordinator(router)
     self.preprocessor = PreProcessor(publisher)
     self.distributor = Distributor(dist)
+    self.collector = Collector(col)
     self.ui = ATGui(self)
     self.thread = None
     self.stop = threading.Event()
@@ -25,6 +27,7 @@ class ATDriver:
     self.coordinator.start()
     self.preprocessor.start()
     self.distributor.start()
+    self.collector.start()
     if self.thread is None:
       self.thread = threading.Thread(target=self.run, name="autotrader", daemon=True)
       self.thread.start()
@@ -38,6 +41,7 @@ class ATDriver:
     if self.thread is not None:
       self.thread.join(timeout)
       self.thread = None
+    self.collector.stop_thread()
     self.distributor.stop_thread()
     self.preprocessor.stop_thread()
     self.coordinator.stop_thread()

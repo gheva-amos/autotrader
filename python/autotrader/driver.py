@@ -86,11 +86,12 @@ class ATDriver:
       self.coordinator.request_historical_data(inst)
 
   def handle_bars(self):
+    last_symbol = ''
     while self.preprocessor.bars:
-      key, bars = self.preprocessor.bars.popitem()
+      last_symbol, bars = self.preprocessor.bars.popitem()
       for bar in bars:
         msg = {
-          'symbol': key,
+          'symbol': last_symbol,
           'date': bar[0],
           'high': bar[1],
           'low': bar[2],
@@ -101,6 +102,7 @@ class ATDriver:
           'count': bar[7],
         }
         self.distributor.send_frames(['historical_bar'.encode(), json.dumps(msg).encode()])
+      self.distributor.send_frames(['historical_bar_done'.encode(), last_symbol.encode()])
 
 
   def run(self):

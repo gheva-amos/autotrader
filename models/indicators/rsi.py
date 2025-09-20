@@ -41,6 +41,7 @@ class RSI:
       if down_avg == 0.0:
         add = 0.00001
       rs = up_avg / (down_avg + add)
+      if rs == 1: rs += 1e-8
       self.rsis[bar['date']] = 100 - 100 / (1 - rs)
       ret = True
 

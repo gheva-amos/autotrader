@@ -3,6 +3,7 @@ from moving_average import MovingAverage
 import zmq
 import queue
 import json
+import traceback
 
 class BaseModel(WorkingThread):
   def __init__(self, name, listen, send):
@@ -17,7 +18,17 @@ class BaseModel(WorkingThread):
       frames = self.inbox.get_nowait()
     except queue.Empty:
       return
-    self.handle_frames(frames)
+    try:
+      self.handle_frames(frames)
+    except Exception as e:
+      print("Standard error:", e)
+      traceback.print_exc()
+    except BaseException as e:
+      print("Non-standard error:", e)
+      traceback.print_exc()
+    except:
+      print('Caught an exception, continuing')
+      traceback.print_exc()
 
   def handle_frames(self, frames):
     pass

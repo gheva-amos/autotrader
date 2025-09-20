@@ -46,7 +46,7 @@ class Indicators(BaseModel):
   def send_results_for(self, symbol):
     msg = {
       'symbol': symbol,
-      'start_date': self.start_date[symbol],
+      'start_date': self.start_date[symbol] if symbol in self.start_date else '',
       'dates': self.dates[symbol],
       'labels': self.labels[symbol],
       'average': self.moving_averages[symbol].averages,

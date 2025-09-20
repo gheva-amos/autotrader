@@ -13,10 +13,22 @@ class Indicators(BaseModel):
     self.dates = {}
     self.labels = {}
     self.moving_averages = {}
+    self.ma26 = {}
+    self.ma10 = {}
     self.macds = {}
     self.tsis = {}
     self.rsis = {}
     self.obvs = {}
+
+  def process_ma10(self, symbol, bar):
+    if symbol not in self.ma10:
+      self.ma10[symbol] = MovingAverage(10)
+    return self.ma10[symbol].process_bar(bar)
+
+  def process_ma26(self, symbol, bar):
+    if symbol not in self.ma26:
+      self.ma26[symbol] = MovingAverage(26)
+    return self.ma26[symbol].process_bar(bar)
 
   def process_moving_averages(self, symbol, bar):
     if symbol not in self.moving_averages:
@@ -51,6 +63,8 @@ class Indicators(BaseModel):
       'labels': self.labels[symbol],
       'average': self.moving_averages[symbol].averages,
       'macd': (self.macds[symbol].values, self.macds[symbol].signals),
+      'ma26': self.ma26[symbol].averages,
+      'ma10': self.ma10[symbol].averages,
       'tsi': self.tsis[symbol].tsis,
       'rsi': self.rsis[symbol].rsis,
       'obv': self.obvs[symbol].obv,
@@ -77,7 +91,9 @@ class Indicators(BaseModel):
     r3 = self.process_tsis(symbol, bar)
     r4 = self.process_rsis(symbol, bar)
     r5 = self.process_obvs(symbol, bar)
-    if r1 and r2 and r3 and r4 and r5 and symbol not in self.start_date:
+    r6 = self.process_ma26(symbol, bar)
+    r7 = self.process_ma10(symbol, bar)
+    if r1 and r2 and r3 and r4 and r5 and r6 and r7 and symbol not in self.start_date:
       self.start_date[symbol] = bar['date']
 
 def main(listen, send):

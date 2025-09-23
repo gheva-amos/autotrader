@@ -106,63 +106,111 @@ class RoundRobinDataSource(IterableDataset):
         xb, yN_b, yH_b, tgt_b = item
         yield xb, yN_b, yH_b, tgt_b
 
+class BinaryHead(nn.Module):
+  def __init__(self, in_dim, hidden=(128, 64), drop=0.2):
+    super().__init__()
+
+    layers = []
+    d = in_dim
+    for h in hidden:
+      layers += [nn.LayerNorm(d)]
+      layers += [nn.Linear(d, h), nn.ReLU(), nn.Dropout(drop)]
+      d = h
+    layers.append(nn.Linear(d, 1))
+    self.net = nn.Sequential(*layers)
+
+  def forward(self, x):
+     return self.net(x).squeeze(1)
+
 class Cerberos(nn.Module):
   def __init__(self, features, hidden=128, layers=2, drop=0.2):
     super().__init__()
     self.memory = nn.LSTM(features, hidden, num_layers=layers, batch_first=True,
       dropout=(drop if layers > 1 else 0.0))
-    self.head_next = nn.Linear(hidden, 1)
-    self.head_hist = nn.Linear(hidden, 1)
-    self.head_target = nn.Linear(hidden, 1)
+    self.head_next = BinaryHead(hidden, hidden=(128,128), drop=drop)
+    self.head_hist = BinaryHead(hidden, hidden=(128,64), drop=drop)
+    self.head_target = nn.Sequential(                  # keep as regression
+      nn.LayerNorm(hidden),
+      nn.Linear(hidden, 128),
+      nn.ReLU(),
+      nn.Dropout(drop),
+      nn.Linear(128, 1)
+    )
 
   def forward(self, x):
     out, _ = self.memory(x)
     h = out[:, -1, :]
-    n_logit = self.head_next(h).squeeze(1)
-    h_logit = self.head_hist(h).squeeze(1)
+    n_logit = self.head_next(h)
+    h_logit = self.head_hist(h)
     t_logit = self.head_target(h).squeeze(1)
     return n_logit, h_logit, t_logit
 
-def train(model, loader, epochs, cp_path):
+def calc_nl_loss(n, l):
+  return 0.7 * n + 0.3 * l
+
+def calc_loss(nl, tgt):
+  return 0.9 * nl + 0.1 * tgt
+
+def train(model, train_loader, val_loader, epochs, cp_path):
   bce = nn.BCEWithLogitsLoss()
   mse = nn.MSELoss()
   opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+  lowest_loss = validate_epoch(val_loader, model, mse, bce)
+  print(f'validation: {lowest_loss}')
   for epoch in range(epochs):
     model.train()
-    for xb, yN, yH, tgt in loader:
+    for xb, yN, yH, tgt in train_loader:
       n_logit, h_logit, tgt_pred = model(xb)
-      nl_loss = bce(n_logit, yN.float()) + bce(h_logit, yH.float())
+      nl_loss = calc_nl_loss(bce(n_logit, yN.float()), bce(h_logit, yH.float()))
       tgt_loss = mse(tgt_pred, tgt.float())
-      loss = 0.9 * nl_loss + 0.1 * tgt_loss
+      loss = calc_loss(nl_loss, tgt_loss)
       opt.zero_grad()
       loss.backward()
       opt.step()
     print("epoch", epoch, "loss", loss.item())
-    ckpt = {
-      "model_state": model.state_dict(),
-      "optimizer_state": opt.state_dict(),
-      "epoch": epoch,
-    }
-    torch.save(ckpt, os.path.join(cp_path, str(epoch) + '.cp'))
+    val = validate_epoch(val_loader, model, mse, bce)
+    print(f'validation: {val}')
+    if val < lowest_loss:
+      ckpt = {
+        "model_state": model.state_dict(),
+        "optimizer_state": opt.state_dict(),
+        "epoch": epoch,
+      }
+      torch.save(ckpt, os.path.join(cp_path, str(epoch) + '.cp'))
+      lowest_loss = val
     
-    
+def validate_epoch(val_loader, model, mse, bce):    
+  model.eval()
+  losses = []
+  for xb, yN, yH, tgt in val_loader:
+    with torch.no_grad():
+      n_logit, h_logit, tgt_pred = model(xb)
+      nl_loss = calc_nl_loss(bce(n_logit, yN.float()), bce(h_logit, yH.float()))
+      tgt_loss = mse(tgt_pred, tgt.float())
+      loss = calc_loss(nl_loss, tgt_loss)
+      losses.append(loss)
+  return sum(losses) / len(losses)
 
-def train_model(window, data_dir, checkpoint_dir):
+def train_model(window, data_dir, val_dir, checkpoint_dir, epochs):
 
   symbols, data = load_files(data_dir, window)
 
   rr_ds = RoundRobinDataSource(data)
-  loader = DataLoader(rr_ds, batch_size=32, shuffle=False)
+  train_loader = DataLoader(rr_ds, batch_size=32, shuffle=False)
 
-  xb, _, _, _ = next(iter(loader))
+  xb, _, _, _ = next(iter(train_loader))
 
   model = Cerberos(xb.shape[2], 128, 3)
 
-  train(model, loader, 100, checkpoint_dir)
+  symbols, data = load_files(data_dir, window)
+
+  rr_ds = RoundRobinDataSource(data)
+  val_loader = DataLoader(rr_ds, batch_size=32, shuffle=False)
+
+  train(model, train_loader, val_loader, epochs, checkpoint_dir)
 
 def validate(window, data_dir, checkpoint):
   symbols, data = load_files(data_dir, window)
-  print (data)
   rr_ds = RoundRobinDataSource(data)
   loader = DataLoader(rr_ds, batch_size=32, shuffle=False)
   xb, _, _, _ = next(iter(loader))
@@ -175,9 +223,9 @@ def validate(window, data_dir, checkpoint):
   for xb, yN, yH, tgt in loader:
     with torch.no_grad():
       n_logit, h_logit, tgt_pred = model(xb)
-      nl_loss = bce(n_logit, yN.float()) + bce(h_logit, yH.float())
+      nl_loss = calc_nl_loss(bce(n_logit, yN.float()), bce(h_logit, yH.float()))
       tgt_loss = mse(tgt_pred, tgt.float())
-      loss = 0.9 * nl_loss + 0.1 * tgt_loss
+      loss = calc_loss(nl_loss, tgt_loss)
     print(f'loss was: {loss.item()}')
 
 def estimate(window, file, checkpoint):
@@ -238,6 +286,7 @@ if __name__ == '__main__':
 
   train_parser = subparsers.add_parser("train")
   train_parser.add_argument('train_dir', default='', help='the directory with input files to process')
+  train_parser.add_argument('val_dir', default='', help='the directory with validation files to process')
   train_parser.add_argument('checkpoints', default='', help='the directory to hols checkpoints')
 
   eval_parser = subparsers.add_parser("validate")
@@ -254,7 +303,7 @@ if __name__ == '__main__':
 
   args = parser.parse_args()
   if args.mode == 'train':
-    train_model(32, args.train_dir, args.checkpoints)
+    train_model(32, args.train_dir, args.val_dir, args.checkpoints, 50)
   elif args.mode == 'validate':
     validate(32, args.data_dir, args.checkpoint)
   elif args.mode == 'estimate':

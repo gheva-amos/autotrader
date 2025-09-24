@@ -33,6 +33,9 @@ class ATDriver:
       self.thread.start()
     self.ui.mainloop()
 
+  def set_instrument(self, inst):
+    self.instrument = inst
+
   def request_scanner_params(self):
     self.coordinator.request_scanner_params()
 
@@ -81,9 +84,9 @@ class ATDriver:
   def instrument_list(self):
     return [inst[0] for inst in self.preprocessor.symbols]
 
-  def process_instruments(self, instruments):
-    for inst in instruments:
-      self.coordinator.request_historical_data(inst)
+  def process_symbols(self, symbols):
+    for sym in symbols:
+      self.coordinator.request_historical_data(sym)
 
   def handle_bars(self):
     last_symbol = ''

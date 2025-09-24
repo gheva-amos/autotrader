@@ -5,7 +5,7 @@ class ScannerSelect(ttk.Frame):
   def __init__(self, parent):
     super().__init__(parent)
     ttk.Label(self, text="Scanners").pack(pady=8)
-    ttk.Button(self, text="Select Instrument", command=self.select_instruments).pack(pady=8)
+    ttk.Button(self, text="Select Symbol", command=self.select_symbols).pack(pady=8)
     ttk.Button(self, text="Back", command=self.back).pack(pady=8)
     self.box = Scrollable(self)
     self.box.pack(fill="both", expand=True, padx=12, pady=8)
@@ -31,7 +31,7 @@ class ScannerSelect(ttk.Frame):
   def back(self):
     self.parent.show('StartPage')
 
-  def select_instruments(self):
-    self.parent.select_instruments()
+  def select_symbols(self):
+    self.parent.select_symbols()
 
 

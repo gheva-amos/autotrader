@@ -1,5 +1,4 @@
 from autotrader.lib.working_thread import WorkingThread
-from moving_average import MovingAverage
 import zmq
 import queue
 import json

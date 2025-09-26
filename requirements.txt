@@ -11,3 +11,4 @@ backtrader
 zipline-reloaded
 vectorbt
 ta
+fastparquet

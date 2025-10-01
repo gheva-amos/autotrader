@@ -9,6 +9,8 @@ import glob
 import os
 from itertools import zip_longest
 import math
+from models.networks.nn0001 import NN0001
+
 
 DEVICE1 = torch.device("cpu")
 DEVICE = torch.device(
@@ -240,152 +242,9 @@ def column_indices():
   return trend_indices, momentum_indices, volatility_indices, bar_indices, smothed_indices
 #{{{ Common network classes
 
-class BinaryHead(nn.Module):
-  """
-    We start real simple and add layers to this network later
-  """
-  def __init__(self, features):
-    super().__init__()
-    self.net = nn.Linear(features, 1)
-
-  def forward(self, z):
-    return self.net(z).squeeze(1)
-
-class RegHead(nn.Module):
-  """
-    We start real simple and add layers to this network later
-  """
-  def __init__(self, features):
-    super().__init__()
-    self.net = nn.Linear(features, 1)
-
-  def forward(self, z):
-    return self.net(z).squeeze(1)
-
-class Montreal(nn.Module):
-  def __init__(self, mom_idx, tre_idx, vol_idx, smothed_idx):
-    super().__init__()
-    self.register_buffer("mom_idx", torch.tensor(mom_idx, dtype=torch.long))
-    self.register_buffer("tre_idx", torch.tensor(tre_idx, dtype=torch.long))
-    self.register_buffer("vol_idx", torch.tensor(vol_idx, dtype=torch.long))
-    self.register_buffer("smothed_idx", torch.tensor(smothed_idx, dtype=torch.long))
-
-  def split_data(self, x):
-    m = x.index_select(2, self.mom_idx)
-    t = x.index_select(2, self.tre_idx)
-    v = x.index_select(2, self.vol_idx) 
-    s = x.index_select(2, self.smothed_idx) 
-
-    return m, t, v, s
-
-class SimpleSequential(nn.Module):
-  def __init__(self, in_features, out_features, drop = 0.2):
-    super().__init__()
-    self.net = nn.Sequential(nn.LayerNorm(in_features), nn.Linear(in_features, out_features), nn.GELU(), nn.Dropout(drop))
-
-  def forward(self, x):
-    return self.net(x)
-
-class BinaryHead(nn.Module):
-  def __init__(self, in_dim, hidden=(128, 64), drop=0.2):
-    super().__init__()
-
-    layers = []
-    d = in_dim
-    for h in hidden:
-      layers += [nn.LayerNorm(d)]
-      layers += [nn.Linear(d, h), nn.ReLU(), nn.Dropout(drop)]
-      d = h
-    layers.append(nn.Linear(d, 1))
-    self.net = nn.Sequential(*layers)
-
-  def forward(self, x):
-     return self.net(x)
-
-class MemoryLSTM(nn.Module):
-  def __init__(self, F, H=64):
-    super().__init__()
-    self.lstm = nn.LSTM(F, H, batch_first=True)
-
-  def forward(self, x):
-    h, _ = self.lstm(x)
-    return h
-
-class MemoryTCN(nn.Module):
-  def __init__(self, F, H=64, drop=0.2):
-    super().__init__()
-    self.net = nn.Sequential(
-      nn.Conv1d(F, H, 3, padding=1), nn.GELU(),
-      nn.Conv1d(H, H, 3, padding=1), nn.GELU(),
-      nn.Dropout(drop),
-    )
-
-  def forward(self, x):
-    z = self.net(x.transpose(1,2))
-    return z.transpose(1,2)
-
-class BinaryHeadMemory(nn.Module):
-  def __init__(self, F, H=(64, 32, 16, 8), drop=0.2):
-    super().__init__()
-    self.memory = MemoryLSTM(F, F)
-    self.head = BinaryHead(F, H)
-
-  def forward(self, x):
-    x = self.memory(x)
-    return self.head(x)
 #}}}
 
 #{{{ Models
-class Model001(Montreal):
-  def __init__(self, features, mom_idx, tre_idx, vol_idx, smothed_idx, hidden=16, drop=0.2):
-    super().__init__(mom_idx, tre_idx, vol_idx, smothed_idx)
-    self.body = SimpleSequential(4 * hidden, hidden)
-
-    self.memory = MemoryTCN(features, hidden)
-    self.ptsd = MemoryLSTM(hidden, hidden)
-
-    self.encode_mom = SimpleSequential(len(mom_idx), hidden, drop)
-    self.encode_tre = SimpleSequential(len(tre_idx), hidden, drop)
-    self.encode_vol = SimpleSequential(len(vol_idx), hidden, drop)
-    self.encode_smothed = SimpleSequential(len(smothed_idx), hidden, drop)
-
-    self.head_next = BinaryHeadMemory(hidden, (64, 32, 16), drop)
-    self.head_hist = BinaryHeadMemory(hidden, (64, 32, 16), drop)
-    self.head_tgt  = BinaryHead(hidden, (64, 32, 16), drop)
-
-  def forward(self, x):
-    x = self.memory(x)
-
-    m, t, v, s = self.split_data(x)
-
-    m1 = m[:, -1, :]
-    t1 = t[:, -1, :]
-    v1 = v[:, -1, :]
-    s1 = s[:, -1, :]
-
-    m2 = m.mean(dim=1)
-    t2 = t.mean(dim=1)
-    v2 = v.mean(dim=1)
-    s2 = s.mean(dim=1)
-
-    m = m1 + 0.01 * m2
-    t = t1 + 0.01 * t2
-    v = v1 + 0.01 * v2
-    s = s1 + 0.01 * s2
-
-    m = self.encode_mom(m)
-    t = self.encode_tre(t)
-    v = self.encode_vol(v)
-    s = self.encode_smothed(s)
-
-    z = torch.cat([m, t, v, s], dim=1)
-    h = self.body(z)
-    h = self.ptsd(h)
-    
-    n = self.head_next(h).squeeze(1)
-    r = self.head_hist(h).squeeze(1)
-    t = self.head_tgt(h).squeeze(1)
-    return n, r, t
 #}}}
 
 #{{{ 001
@@ -475,7 +334,7 @@ def train001(window, data_dir, checkpoint_dir, epochs):
   trend_indices, momentum_indices, volatility_indices, bar_indices, smothed_indices = column_indices()
 
   xb, _, _, _ = next(iter(train_loader))
-  model = Model001(xb.shape[2], trend_indices, momentum_indices, volatility_indices, smothed_indices, 32, meta_drop).to(DEVICE)
+  model = NN0001(xb.shape[2], trend_indices, momentum_indices, volatility_indices, smothed_indices, 32, meta_drop).to(DEVICE)
 
   do_train001(model, train_loader, val_loader, checkpoint_dir, epochs)
 
@@ -485,7 +344,7 @@ def plot001(window, file, checkpoint):
   trend_indices, momentum_indices, volatility_indices, bar_indices, smothed_indices = column_indices()
 
   xb, _, _, _ = next(iter(loader))
-  model = Model001(xb.shape[2], trend_indices, momentum_indices, volatility_indices, smothed_indices, 32, meta_drop).to(DEVICE)
+  model = NN0001(xb.shape[2], trend_indices, momentum_indices, volatility_indices, smothed_indices, 32, meta_drop).to(DEVICE)
   ckpt = torch.load(checkpoint)
   model.load_state_dict(ckpt["model_state"])
 
@@ -531,7 +390,7 @@ def eval001(window, file, checkpoint):
   mse = nn.MSELoss()
 
   xb, _, _, _ = next(iter(loader))
-  model = Model001(xb.shape[2], trend_indices, momentum_indices, volatility_indices, smothed_indices, 32, meta_drop).to(DEVICE)
+  model = NN0001(xb.shape[2], trend_indices, momentum_indices, volatility_indices, smothed_indices, 32, meta_drop).to(DEVICE)
   ckpt = torch.load(checkpoint)
   model.load_state_dict(ckpt["model_state"])
   model.eval()

@@ -6,6 +6,17 @@ import queue
 import ta
 import io
 
+ALL_COLUMNS = ['open', 'high', 'low', 'volume', 'rsi14', 'macd',
+       'macd_signal', 'macd_diff', 'atr14', 'stoch_k', 'stoch_d', 'sma20',
+       'sma50', 'ema20', 'ema50', 'bb_mavg', 'bb_high', 'bb_low', 'next',
+       'hist', 'target', 'close',
+       'open_ema3', 'close_ema3', 'high_ema3',
+       'low_ema3', 'macd_diff_ema3', 'stoch_k_ema3', 'stoch_d_ema3',
+       'open_m3', 'close_m3', 'high_m3',
+       'low_m3', 'macd_diff_m3', 'stoch_k_m3', 'stoch_d_m3',
+       'open_med3', 'close_med3', 'high_med3',
+       'low_med3', 'macd_diff_med3', 'stoch_k_med3', 'stoch_d_med3']
+
 class BarCollector(BaseModel):
   def __init__(self, listen, send):
     super().__init__("bar_collector", listen, send)
@@ -53,7 +64,7 @@ class BarCollector(BaseModel):
     df["bb_high"] = boll.bollinger_hband()
     df["bb_low"]  = boll.bollinger_lband()
 
-    df.dropna(inplace=True)
+    df = self.preprocess(df)
     return df
 
   def process_thread(self):
@@ -63,7 +74,11 @@ class BarCollector(BaseModel):
         break
       df = self.data_frames[symbol]
       if not df.empty:
-        df = self.add_indicators(df)
+        try:
+          df = self.add_indicators(df)
+        except:
+          print("exception")
+          continue
         buf = io.BytesIO()
         df.to_parquet(buf, index=True)
         self.send_frames(['indicators_pd'.encode(), symbol.encode(), buf.getvalue()])
@@ -85,7 +100,46 @@ class BarCollector(BaseModel):
       row[entry] = bar[entry]
     self.data_frames[symbol] = pd.concat([self.data_frames[symbol], pd.DataFrame([row])])
 
-      
+  def align_features(self, df, cols):
+    df = df.copy()
+    df[cols] = df[cols].apply(pd.to_numeric, errors="coerce")
+    for c in cols:
+      if c not in df: df[c] = pd.NA
+    df = df.loc[:, cols]
+    return df.dropna(subset=cols)
+
+  def preprocess(self, df):
+    ret = {}
+    num_cols = df.select_dtypes(include="number").columns
+    df_norm = df.copy()
+    df_norm.sort_index()
+    df_norm[num_cols] = (df[num_cols] - df[num_cols].mean()) / df[num_cols].std().replace(0, 1e-8)
+    df_norm.index = df.index
+    df_norm['next'] = (df['close'].shift(-1) > df['close']).astype('int8')
+    df_norm['hist'] = ((df['close'].diff().rolling(10).sum() > 0)).astype('int8')
+    df_norm["target"] = df["close"].shift(-1)
+    df_norm = self.ema(df_norm, ['open', 'close', 'high', 'low', 'macd_diff', 'stoch_k', 'stoch_d'])
+    df_norm = self.roll_mean(df_norm, ['open', 'close', 'high', 'low', 'macd_diff', 'stoch_k', 'stoch_d'])
+    df_norm = self.roll_median(df_norm, ['open', 'close', 'high', 'low', 'macd_diff', 'stoch_k', 'stoch_d'])
+    df_norm = self.align_features(df_norm, ALL_COLUMNS)
+    df_norm = df_norm.dropna()
+
+    return df_norm
+
+  def ema(self, df, cols, span=3, suffix="_ema3"):
+    for c in cols:
+      df[c+suffix] = df[c].ewm(span=span, adjust=False).mean()
+    return df
+
+  def roll_mean(self, df, cols, win=3, suffix="_m3"):
+    for c in cols:
+      df[c+suffix] = df[c].rolling(win, min_periods=1).mean()  # center=False (causal)
+    return df
+
+  def roll_median(self, df, cols, win=3, suffix="_med3"):
+    for c in cols:
+      df[c+suffix] = df[c].rolling(win, min_periods=1).median()
+    return df
 
 
 def main(listen, send):

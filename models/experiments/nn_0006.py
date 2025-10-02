@@ -77,45 +77,11 @@ class RoundRobinDataSource(IterableDataset):
         xb, yN_b, yH_b, tgt_b = item
         yield xb, yN_b, yH_b, tgt_b
 
-def align_features(df, cols):
-  df = df.copy()
-  df[cols] = df[cols].apply(pd.to_numeric, errors="coerce")
-  for c in cols:
-    if c not in df: df[c] = pd.NA
-  df = df.loc[:, cols]
-  return df.dropna(subset=cols)
-
-def ema(df, cols, span=3, suffix="_ema3"):
-  for c in cols:
-    df[c+suffix] = df[c].ewm(span=span, adjust=False).mean()
-  return df
-
-def roll_mean(df, cols, win=3, suffix="_m3"):
-  for c in cols:
-    df[c+suffix] = df[c].rolling(win, min_periods=1).mean()  # center=False (causal)
-  return df
-
-def roll_median(df, cols, win=3, suffix="_med3"):
-  for c in cols:
-    df[c+suffix] = df[c].rolling(win, min_periods=1).median()
-  return df
 
 def preprocess(data):
   ret = {}
   for sym, df in data.items():
-    num_cols = df.select_dtypes(include="number").columns
-    df_norm = df.copy()
-    df_norm.sort_index()
-    df_norm[num_cols] = (df[num_cols] - df[num_cols].mean()) / df[num_cols].std().replace(0, 1e-8)
-    df_norm.index = df.index
-    df_norm['next'] = (df['close'].shift(-1) > df['close']).astype('int8')
-    df_norm['hist'] = ((df['close'].diff().rolling(10).sum() > 0)).astype('int8')
-    df_norm["target"] = df["close"].shift(-1)
-    df_norm = df_norm.dropna()
-    df_norm = ema(df_norm, ['open', 'close', 'high', 'low', 'macd_diff', 'stoch_k', 'stoch_d'])
-    df_norm = roll_mean(df_norm, ['open', 'close', 'high', 'low', 'macd_diff', 'stoch_k', 'stoch_d'])
-    df_norm = roll_median(df_norm, ['open', 'close', 'high', 'low', 'macd_diff', 'stoch_k', 'stoch_d'])
-    ret[sym] = align_features(df_norm, ALL_COLUMNS)
+    ret[sym] = df
 
   return ret
 
@@ -123,8 +89,8 @@ def load_file(file):
   ret = {}
   symbol = os.path.splitext(os.path.basename(file))[0]
   ret[symbol] = pd.read_parquet(file)
-  ret[symbol]["date"] = pd.to_datetime(ret[symbol]["date"])
-  ret[symbol] = ret[symbol].set_index("date").sort_index()
+# ret[symbol]["date"] = pd.to_datetime(ret[symbol]["date"])
+# ret[symbol] = ret[symbol].set_index("date").sort_index()
 
   return preprocess(ret)
 
@@ -135,8 +101,8 @@ def load_files(directory):
   for parq in parquets:
     symbol = os.path.splitext(os.path.basename(parq))[0]
     ret[symbol] = pd.read_parquet(parq)
-    ret[symbol]["date"] = pd.to_datetime(ret[symbol]["date"])
-    ret[symbol] = ret[symbol].set_index("date").sort_index()
+#ret[symbol]["date"] = pd.to_datetime(ret[symbol]["date"])
+#    ret[symbol] = ret[symbol].set_index("date").sort_index()
 
   return preprocess(ret)
 

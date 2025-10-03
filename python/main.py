@@ -4,7 +4,7 @@ import argparse
 import importlib.util
 import os
 import sys
-
+import json
 
 def load_module(path):
   abs_path = os.path.abspath(path)
@@ -22,21 +22,25 @@ def main(router_host, preprocessor_host, dist_host, col_host,  instrument):
 
   driver.stop_thread()
 
-if __name__ == "__main__":
+def run():
   parser = argparse.ArgumentParser()
-  parser.add_argument('--router', nargs=1, default='tcp://localhost:7001', help='the url for the router')
-  parser.add_argument('--preprocessor', nargs=1, default='tcp://localhost:7002', help='the url for the preprocessor')
-  parser.add_argument('--distributor', nargs=1, default='tcp://localhost:7007', help='the url for the distributor')
-  parser.add_argument('--collector', nargs=1, default='tcp://localhost:7006', help='the url for the collector')
-  parser.add_argument('--instrument', nargs=1, default='STK', help='the instrument to trade')
-  parser.add_argument("--models", nargs="*", help='list of models to load')
+  parser.add_argument('config', default='python/config.json', help='the config file for this run')
 
   args = parser.parse_args()
 
-  for model in args.models:
-    m = load_module(model)
-    if hasattr(m, "main"):
-      m.main(args.distributor, args.collector)
+  with open(args.config, 'r') as f:
+    cfg = json.load(f)
 
-  main(args.router, args.preprocessor, args.distributor, args.collector, args.instrument)
+  router = cfg['router']
+  preprocessor = cfg['preprocessor']
+  distributor = cfg['distributor']
+  collector = cfg['collector']
+  instrument = cfg['instrument']
+
+  for model in cfg['models']:
+    m = load_module(model['path'])
+    if hasattr(m, "main"):
+      m.main(distributor, collector)
+
+  main(router, preprocessor, distributor, collector, instrument)
 

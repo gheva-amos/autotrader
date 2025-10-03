@@ -1,0 +1,12 @@
+{
+  "router": "tcp://localhost:7001",
+  "preprocessor": "tcp://localhost:7002",
+  "distributor": "tcp://localhost:7007",
+  "collector": "tcp://localhost:7006",
+  "instrument": "STK",
+  "models": [
+    {
+      "path": "models/bars_collector/bars_collector.py"
+    }
+  ]
+}

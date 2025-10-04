@@ -140,13 +140,6 @@ def scale_ys(loader):
 def calc_loss(n, h, t):
   return 0.4 * n + 0.6 * h + 0.01 * t
 
-
-#{{{ Common network classes
-#}}}
-
-#{{{ Models
-#}}}
-
 #{{{ 001
 
 @torch.no_grad()

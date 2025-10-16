@@ -6,7 +6,24 @@
   "instrument": "STK",
   "models": [
     {
-      "path": "models/bars_collector/bars_collector.py"
+      "path": "models/bars_collector/bars_collector.py",
+      "args": {
+        "send_unprocessed": false,
+        "models": [
+          {
+            "window": 10,
+            "checkpoint": "data/checkpoint_window_10_lr_0_001_epochs_500_488.cp"
+          },
+          {
+            "window": 15,
+            "checkpoint": "data/checkpoint_window_15_lr_0_001_epochs_500_477.cp"
+          },
+          {
+            "window": 20,
+            "checkpoint": "data/checkpoint_window_20_lr_0_001_epochs_500_495.cp"
+          }
+        ]
+      }
     }
   ]
 }

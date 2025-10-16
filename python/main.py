@@ -40,7 +40,7 @@ def run():
   for model in cfg['models']:
     m = load_module(model['path'])
     if hasattr(m, "main"):
-      m.main(distributor, collector)
+      m.main(distributor, collector, model['args'])
 
   main(router, preprocessor, distributor, collector, instrument)
 

@@ -11,6 +11,7 @@ class SymbolSelect(ttk.Frame):
     ttk.Entry(self, textvariable=self.manual_symbol).pack(pady=8)
     ttk.Button(self, text="Process Symbols", command=self.process_symbols).pack(pady=8)
     ttk.Label(self, text="Symbols").pack(pady=8)
+    ttk.Button(self, text="Analyze", command=self.analyze).pack(pady=8)
     ttk.Button(self, text="Back", command=self.back).pack(pady=8)
     self.box = Scrollable(self)
     self.box.pack(fill="both", expand=True, padx=12, pady=8)
@@ -35,4 +36,7 @@ class SymbolSelect(ttk.Frame):
 
   def back(self):
     self.parent.show('ScannerSelect')
+
+  def analyze(self):
+    self.parent.show_list_symbols()
 

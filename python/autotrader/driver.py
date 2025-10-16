@@ -107,6 +107,8 @@ class ATDriver:
         self.distributor.send_frames(['historical_bar'.encode(), json.dumps(msg).encode()])
       self.distributor.send_frames(['historical_bar_done'.encode(), last_symbol.encode()])
 
+  def known_symbols(self):
+    return self.collector.symbols
 
   def run(self):
     while not self.stop.is_set():

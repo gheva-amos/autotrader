@@ -5,6 +5,7 @@ import threading
 import queue
 import ta
 import io
+from models.nn001.nn001 import NN01Model
 
 ALL_COLUMNS = ['open', 'high', 'low', 'volume', 'rsi14', 'macd',
        'macd_signal', 'macd_diff', 'atr14', 'stoch_k', 'stoch_d', 'sma20',
@@ -18,12 +19,20 @@ ALL_COLUMNS = ['open', 'high', 'low', 'volume', 'rsi14', 'macd',
        'low_med3', 'macd_diff_med3', 'stoch_k_med3', 'stoch_d_med3']
 
 class BarCollector(BaseModel):
-  def __init__(self, listen, send):
+  def __init__(self, listen, send, send_unprocessed=False, models=[]):
     super().__init__("bar_collector", listen, send)
     self.data_frames = {}
     self.done_names = queue.Queue()
     self.processor_thread = threading.Thread(target=self.process_thread, daemon=True)
     self.processor_thread.start()
+    self.send_unprocessed = send_unprocessed
+    self.models = {}
+    self.load_models(models)
+
+  def load_models(self, models_args):
+    for m in models_args:
+      model = NN01Model(m['checkpoint'], m['window'])
+      self.models[m['window']] = model
 
   def send_results_for(self, symbol):
     self.done_names.put(symbol)
@@ -77,12 +86,26 @@ class BarCollector(BaseModel):
         try:
           df = self.add_indicators(df)
         except:
-          print("exception")
+          print(f"exception {symbol}")
           continue
-        buf = io.BytesIO()
-        df.to_parquet(buf, index=True)
-        self.send_frames(['indicators_pd'.encode(), symbol.encode(), buf.getvalue()])
+        self.run_models(symbol, df)
+        if self.send_unprocessed:
+          buf = io.BytesIO()
+          df.to_parquet(buf, index=True)
+          self.send_frames(['indicators_pd'.encode(), symbol.encode(), buf.getvalue()])
       
+  def run_models(self, symbol, df):
+    all_outputs = {}
+    send = []
+    for win, model in self.models.items():
+      buf = io.BytesIO()
+      model.eval(df).to_parquet(buf, index=True)
+      all_outputs[win] = buf
+      send.extend([str(win).encode(), buf.getvalue()])
+    self.send_frames(['data_frames'.encode(), symbol.encode(), *send])
+    print(all_outputs)
+
+
   def handle_frames(self, frames):
     if frames[1].decode() == 'historical_bar_done':
       self.send_results_for(frames[2].decode())
@@ -142,7 +165,9 @@ class BarCollector(BaseModel):
     return df
 
 
-def main(listen, send):
-  ind = BarCollector(listen, send)
+def main(listen, send, args=None):
+  send_unprocessed = args['send_unprocessed']
+  models = args['models']
+  ind = BarCollector(listen, send, send_unprocessed, models)
   ind.start()
   print('loaded')

@@ -11,6 +11,7 @@ import tempfile
 class Collector(WorkingThread):
   def __init__(self, host):
     super().__init__("collector", host, host, zmq.PULL, None, True)
+    self.symbols = {}
 
   def atomic_write_file(self, path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -33,4 +34,12 @@ class Collector(WorkingThread):
       path = os.path.join('./data', symbol + '.parquet')
       data = io.BytesIO(frames[3])
       self.atomic_write_file(path, data.getvalue())
+    elif frames[1].decode() == 'data_frames':
+      symbol = frames[2].decode()
+      if not symbol in self.symbols:
+        self.symbols[symbol] = {}
+      for i in range(3, len(frames), 2):
+        data = io.BytesIO(frames[i + 1])
+        self.symbols[symbol][frames[i].decode()] = pd.read_parquet(data)
+      print(self.symbols)
 

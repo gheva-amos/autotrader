@@ -12,6 +12,7 @@ class Collector(WorkingThread):
   def __init__(self, host):
     super().__init__("collector", host, host, zmq.PULL, None, True)
     self.symbols = {}
+    self.combined = {}
 
   def atomic_write_file(self, path, data):
     os.makedirs(os.path.dirname(path), exist_ok=True)
@@ -21,6 +22,21 @@ class Collector(WorkingThread):
       os.fsync(tmp.fileno())
       tmp_path = tmp.name
     os.replace(tmp_path, path)
+
+  def merge_models(self, symbol):
+    dfs = []
+    for name, df in self.symbols[symbol].items():
+      df = df.copy()
+      if not pd.api.types.is_datetime64_any_dtype(df.index):
+        df.index = pd.to_datetime(df.index, errors="coerce")
+      df = df.sort_index()
+
+      df.columns = [f"{name}_{c}" for c in df.columns]
+      dfs.append(df)
+    if not dfs:
+      return
+    combined = pd.concat(dfs, axis=1, join="outer").sort_index()
+    self.combined[symbol] = combined
 
   def step(self):
     try:
@@ -41,5 +57,6 @@ class Collector(WorkingThread):
       model_name = frames[3].decode()
       data = io.BytesIO(frames[4])
       self.symbols[symbol][model_name] = pd.read_parquet(data)
-    print(self.symbols)
+      self.merge_models(symbol)
+      print(symbol)
 

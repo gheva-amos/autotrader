@@ -18,9 +18,9 @@ ALL_COLUMNS = ['open', 'high', 'low', 'volume', 'rsi14', 'macd',
        'open_med3', 'close_med3', 'high_med3',
        'low_med3', 'macd_diff_med3', 'stoch_k_med3', 'stoch_d_med3']
 
-class BarCollector(BaseModel):
+class Model001(BaseModel):
   def __init__(self, listen, send, send_unprocessed=False, models=[]):
-    super().__init__("bar_collector", listen, send)
+    super().__init__("Model001", listen, send)
     self.data_frames = {}
     self.done_names = queue.Queue()
     self.processor_thread = threading.Thread(target=self.process_thread, daemon=True)
@@ -38,6 +38,9 @@ class BarCollector(BaseModel):
     self.done_names.put(symbol)
 
   def add_indicators(self, df):
+    if "date" in df.columns:
+      df["date"] = pd.to_datetime(df["date"])
+      df = df.set_index("date").sort_index()
     try:
       cols = ["open","high","low","close","volume"]
       
@@ -95,15 +98,11 @@ class BarCollector(BaseModel):
           self.send_frames(['indicators_pd'.encode(), symbol.encode(), buf.getvalue()])
       
   def run_models(self, symbol, df):
-    all_outputs = {}
-    send = []
     for win, model in self.models.items():
       buf = io.BytesIO()
+      model_name = "model001_window_" + str(win)
       model.eval(df).to_parquet(buf, index=True)
-      all_outputs[win] = buf
-      send.extend([str(win).encode(), buf.getvalue()])
-    self.send_frames(['data_frames'.encode(), symbol.encode(), *send])
-    print(all_outputs)
+      self.send_frames(['data_frames'.encode(), symbol.encode(), model_name.encode(), buf.getvalue()])
 
 
   def handle_frames(self, frames):
@@ -168,6 +167,6 @@ class BarCollector(BaseModel):
 def main(listen, send, args=None):
   send_unprocessed = args['send_unprocessed']
   models = args['models']
-  ind = BarCollector(listen, send, send_unprocessed, models)
+  ind = Model001(listen, send, send_unprocessed, models)
   ind.start()
   print('loaded')

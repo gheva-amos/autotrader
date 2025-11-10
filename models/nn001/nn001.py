@@ -33,6 +33,7 @@ class NN01Model:
 
   @torch.no_grad()
   def eval(self, df):
+    df_idx = df.index
     loader = self.load_data(df)
     p_next, p_hist, targets, idxs = [], [], [], []
     idx = 0
@@ -50,15 +51,16 @@ class NN01Model:
         targets.append(tmp.item())
         idxs.append(idx)
         idx += 1
+    N = len(idxs)
+    df_idx = df_idx[-N:]
     ret = pd.DataFrame(
       {
         'id': idxs,
         'next': p_next,
         'hist': p_hist,
         'targets': targets
-      }
+      }, index=df_idx
     )
-    ret = ret.set_index('id')
     ret = ret.sort_index()
     return ret
 

@@ -38,8 +38,8 @@ class Collector(WorkingThread):
       symbol = frames[2].decode()
       if not symbol in self.symbols:
         self.symbols[symbol] = {}
-      for i in range(3, len(frames), 2):
-        data = io.BytesIO(frames[i + 1])
-        self.symbols[symbol][frames[i].decode()] = pd.read_parquet(data)
-      print(self.symbols)
+      model_name = frames[3].decode()
+      data = io.BytesIO(frames[4])
+      self.symbols[symbol][model_name] = pd.read_parquet(data)
+    print(self.symbols)
 

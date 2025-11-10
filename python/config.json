@@ -6,6 +6,10 @@
   "instrument": "STK",
   "models": [
     {
+      "path": "models/bars_collector/bars_collector.py",
+      "args": {}
+    },
+	  {
       "path": "models/model001/model001.py",
       "args": {
         "send_unprocessed": false,

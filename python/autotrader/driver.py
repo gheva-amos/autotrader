@@ -9,7 +9,7 @@ import sys
 import json
 
 class ATDriver:
-  def __init__(self, router, publisher, dist, col,  instrument):
+  def __init__(self, router, publisher, dist, col, instrument):
     self.coordinator = Coordinator(router)
     self.preprocessor = PreProcessor(publisher)
     self.distributor = Distributor(dist)
@@ -108,7 +108,7 @@ class ATDriver:
       self.distributor.send_frames(['historical_bar_done'.encode(), last_symbol.encode()])
 
   def known_symbols(self):
-    return self.collector.symbols
+    return self.collector.combined
 
   def run(self):
     while not self.stop.is_set():
@@ -121,3 +121,6 @@ class ATDriver:
         self.request_scanners()
         self.scanners_requested = True
       time.sleep(1)
+
+  def set_candlestick(self, candlestick_columns):
+    self.ui.set_candlestick(candlestick_columns)

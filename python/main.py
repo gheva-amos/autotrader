@@ -15,9 +15,10 @@ def load_module(path):
   spec.loader.exec_module(module)
   return module
 
-def main(router_host, preprocessor_host, dist_host, col_host,  instrument):
+def main(router_host, preprocessor_host, dist_host, col_host, instrument, candlestick_columns):
   driver = ATDriver(router_host, preprocessor_host, dist_host, col_host, instrument)
   
+  driver.set_candlestick(candlestick_columns)
   driver.start()
 
   driver.stop_thread()
@@ -42,5 +43,5 @@ def run():
     if hasattr(m, "main"):
       m.main(distributor, collector, model['args'])
 
-  main(router, preprocessor, distributor, collector, instrument)
+  main(router, preprocessor, distributor, collector, instrument, cfg["candlestick_columns"])
 

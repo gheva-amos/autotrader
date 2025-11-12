@@ -22,6 +22,8 @@ class ATGui(tk.Tk):
     self.current_page = None
     self.inbox = queue.Queue()
 
+    self.protocol("WM_DELETE_WINDOW", self.on_close)
+
     self.start_page = StartPage(self)
     self.scanner_select = ScannerSelect(self)
     self.scanner_config = ScannerConfig(self)
@@ -71,12 +73,16 @@ class ATGui(tk.Tk):
       self.symbol = symbol
     self.inbox.put('analyze_symbol')
 
-  def show_plot_symbol(self, label):
-    self.symbol_label = label
+  def show_plot_symbol(self, display, normalize, candlestick=False):
+    self.display_columns = display
+    self.normalize_columns = normalize
+    self.candlestick = candlestick
     self.inbox.put('plot_symbol')
 
-  def show_table_symbol(self, label):
-    self.symbol_label = label
+  def show_table_symbol(self, display, normalize):
+    self.display_columns = display
+    self.normalize_columns = normalize
+    self.candlestick = False
     self.inbox.put('table_symbol')
 
   def process_symbols(self, symbols):
@@ -111,10 +117,10 @@ class ATGui(tk.Tk):
       self.analyze_symbol.populate(self.symbol)
     if command == 'plot_symbol':
       self.show('PlotSymbol')
-      self.plot_symbol.populate(self.driver.known_symbols()[self.symbol][self.symbol_label])
+      self.plot_symbol.populate(self.select_columns(), self.candlestick)
     if command == 'table_symbol':
       self.show('TableSymbol')
-      self.table_symbol.populate(self.driver.known_symbols()[self.symbol][self.symbol_label])
+      self.table_symbol.populate(self.select_columns())
 
   def poll_inbox(self):
     try:
@@ -124,5 +130,31 @@ class ATGui(tk.Tk):
     else:
       self.handle_command(command)
     finally:
-      self.after(1, self.poll_inbox)
+      self.after_id = self.after(1, self.poll_inbox)
 
+  def select_columns(self):
+    df = self.driver.known_symbols()[self.symbol]
+    max_val = df[self.display_columns + self.normalize_columns].to_numpy().max()
+    min_val = df[self.display_columns + self.normalize_columns].to_numpy().min()
+    dev_by = max_val - min_val
+    if dev_by == 0:
+      dev_by = 1e-8
+
+    ret = df[self.display_columns].copy()
+    for col in self.normalize_columns:
+      if col in df:
+        ret[col] = df[col]
+    for col in self.candlestick_columns:
+      if not col in ret:
+        ret[col] = df[col]
+    return ret
+
+  def set_candlestick(self, candlestick_columns):
+    self.candlestick_columns = [col for col in candlestick_columns.values()]
+    self.plot_symbol.set_candlestick(candlestick_columns)
+
+  def on_close(self):
+    if self.after_id is not None:
+      self.after_cancel(self.after_id)
+    self.plot_symbol.close()
+    self.destroy()

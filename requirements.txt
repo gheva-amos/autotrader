@@ -12,3 +12,5 @@ zipline-reloaded
 vectorbt
 ta
 fastparquet
+mplfinance
+tensorflow

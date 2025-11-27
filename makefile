@@ -21,3 +21,12 @@ connect:
 kill:
 	docker stop ${CONTAINER_NAME}
 	docker rm ${CONTAINER_NAME}
+
+kkill:
+	kubectl scale deployment autotrader-dev --replicas=0
+
+krun:
+	kubectl scale deployment autotrader-dev --replicas=1
+
+konnect:
+	kubectl exec -it deployment/autotrader-dev -- bash

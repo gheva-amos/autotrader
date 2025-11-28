@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from tkinter import filedialog
 from ui.scrollable import Scrollable
 
 class AnalyzeSymbol(ttk.Frame):
@@ -10,6 +11,7 @@ class AnalyzeSymbol(ttk.Frame):
     ttk.Button(self, text="Back", command=self.back).pack(pady=8)
     ttk.Button(self, text="Graph", command=self.show_graph).pack(pady=8)
     ttk.Button(self, text="Table", command=self.show_table).pack(pady=8)
+    ttk.Button(self, text="Save", command=self.save).pack(pady=8)
 
     self.show_candlestick = tk.BooleanVar(value=False)
     tk.Checkbutton(self, text="Enable candlestick", variable=self.show_candlestick).pack(pady=8)
@@ -44,3 +46,12 @@ class AnalyzeSymbol(ttk.Frame):
     display = [col for col, var in self.column_types.items() if var.get() == "display"]
     normalize = [col for col, var in self.column_types.items() if var.get() == "normalize"]
     self.parent.show_table_symbol(display, normalize)
+
+  def save(self):
+    print(self.symbol_data)
+    save_path = filedialog.asksaveasfilename(
+      title="Save file as",
+      defaultextension=".parquet",
+      filetypes=[("Parquet files", "*.parquet")]
+    )
+    self.symbol_data.to_parquet(save_path)

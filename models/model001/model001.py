@@ -101,9 +101,45 @@ class Model001(BaseModel):
     for win, model in self.models.items():
       buf = io.BytesIO()
       model_name = "model001_window_" + str(win)
-      model.eval(df).to_parquet(buf, index=True)
+      tmp = model.eval(df)
+      tmp = self.eval_returns(tmp)
+      tmp.to_parquet(buf, index=True)
       self.send_frames(['data_frames'.encode(), symbol.encode(), model_name.encode(), buf.getvalue()])
 
+  def eval_returns(self, df):
+    df = df.copy()
+    df['strategy'] = (df['hist'] > 0.5).astype(int)
+    df['buy'] = (df['strategy'].diff() == 1).astype(int)
+    df['sell'] = (df['strategy'].diff() == -1).astype(int)
+
+    initial_capital = 1000
+    cash = initial_capital
+    shares = 0
+
+    portfolio_values = []
+    cash_list = []
+    shares_list = []
+
+    for i, row in df.iterrows():
+      price = row["close"]
+
+      if row['buy'] == 1:
+        shares = cash / price
+        cash = 0
+
+      if row['sell'] == 1:
+        cash = shares * price
+        shares = 0
+
+      portfolio_value = cash + shares * price
+      portfolio_values.append(portfolio_value)
+      cash_list.append(cash)
+      shares_list.append(shares)
+
+    df["portfolio"] = portfolio_values
+    df = df.drop(columns=['strategy', 'buy', 'sell', 'close'])
+
+    return df
 
   def handle_frames(self, frames):
     if frames[1].decode() == 'historical_bar_done':

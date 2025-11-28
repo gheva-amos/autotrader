@@ -34,6 +34,7 @@ class NN01Model:
   @torch.no_grad()
   def eval(self, df):
     df_idx = df.index
+    close = df['close']
     loader = self.load_data(df)
     p_next, p_hist, targets, idxs = [], [], [], []
     idx = 0
@@ -58,7 +59,8 @@ class NN01Model:
         'id': idxs,
         'next': p_next,
         'hist': p_hist,
-        'targets': targets
+        'targets': targets,
+        'close': close
       }, index=df_idx
     )
     ret = ret.sort_index()

@@ -48,7 +48,6 @@ class AnalyzeSymbol(ttk.Frame):
     self.parent.show_table_symbol(display, normalize)
 
   def save(self):
-    print(self.symbol_data)
     save_path = filedialog.asksaveasfilename(
       title="Save file as",
       defaultextension=".parquet",

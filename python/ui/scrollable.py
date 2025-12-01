@@ -40,7 +40,6 @@ class Scrollable(ttk.Frame):
     self.canvas.unbind_all("<Button-5>")
 
   def _on_wheel(self, event):
-    print("here")
     delta = -1*(event.delta//120) if event.delta else ( -1 if event.num==5 else 1 )
     self.canvas.yview_scroll(delta, "units")
 

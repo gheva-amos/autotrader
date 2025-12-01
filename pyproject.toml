@@ -1,0 +1,44 @@
+[project]
+name = "AutoTrader"
+version = "1.0.0"
+description = "A framework for studying market data"
+readme = "README.md"
+authors = [
+    { name = "Amos Gheva" }
+]
+license = "MIT"
+requires-python = ">=3.13"
+   
+dependencies = [
+    "ibapi==9.81.1.post1",
+    "pyzmq==27.1.0",
+    "protobuf==6.33.1",
+    "pandas==2.3.3",
+    "torch==2.9.1",
+    "numpy==2.3.5",
+    "matplotlib==3.10.7",
+    "yfinance==0.2.66",
+    "jupyterlab==4.5.0",
+    "backtrader==1.9.78.123",
+    "zipline-reloaded==3.1.1",
+    "vectorbt==0.28.1",
+    "ta==0.11.0",
+    "fastparquet==2024.11.0",
+    "mplfinance==0.12.10b0",
+    "tensorflow==2.20.0",
+
+]     
+      
+[tool.setuptools.packages.find]
+where = ["."]
+
+[tool.setuptools]
+package-dir = {"" = "."}
+
+[project.scripts]
+autotrader = "pytrader.__main__:main"
+  
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
